@@ -1111,3 +1111,228 @@ h2 {
     color: #1e293b;
   }
 }
+
+/* Workshop */
+.workshop-page {
+  display: flex;
+  height: calc(100vh - 40px);
+  background: #0f172a;
+  overflow: hidden;
+}
+
+.workshop-sidebar {
+  width: 240px;
+  min-width: 240px;
+  background: #1e293b;
+  border-right: 1px solid #334155;
+  overflow-y: auto;
+  padding: 0.5rem 0;
+}
+
+.workshop-sidebar-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.8rem 1rem 0.5rem;
+}
+
+.workshop-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.55rem 1rem;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 0.82rem;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, color 0.15s;
+}
+
+.workshop-nav-item:hover { background: #253349; color: #e2e8f0; }
+.workshop-nav-item.active { background: #1e3a5f; color: #60a5fa; border-left: 2px solid #3b82f6; }
+
+.workshop-nav-icon { font-size: 1rem; min-width: 1.2rem; }
+.workshop-nav-label { flex: 1; }
+.workshop-nav-duration { font-size: 0.7rem; color: #475569; white-space: nowrap; }
+
+.workshop-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem 2rem;
+}
+
+.workshop-part-header {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid #334155;
+}
+
+.workshop-part-icon { font-size: 1.5rem; }
+.workshop-part-header h2 { font-size: 1.3rem; color: #f1f5f9; margin: 0; flex: 1; }
+.workshop-part-duration { font-size: 0.8rem; color: #64748b; background: #1e293b; padding: 0.2rem 0.6rem; border-radius: 10px; }
+
+.workshop-body { display: flex; flex-direction: column; gap: 0.8rem; max-width: 800px; }
+
+.workshop-intro { font-size: 0.9rem; color: #94a3b8; line-height: 1.5; }
+
+.workshop-meta {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  padding: 0.4rem 0.7rem;
+  background: #1e293b;
+  border-radius: 6px;
+}
+
+.workshop-meta-label { color: #64748b; font-weight: 600; white-space: nowrap; }
+.workshop-meta-value { color: #cbd5e1; }
+
+.workshop-heading { font-size: 1rem; color: #f1f5f9; margin: 0.5rem 0 0.2rem; }
+
+.workshop-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.3rem; }
+.workshop-list li { font-size: 0.85rem; color: #94a3b8; padding-left: 1rem; position: relative; }
+.workshop-list li::before { content: '→'; position: absolute; left: 0; color: #475569; }
+
+.workshop-step {
+  background: #1e293b;
+  border-radius: 8px;
+  padding: 1rem;
+  border-left: 3px solid #3b82f6;
+}
+
+.workshop-step-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.6rem;
+}
+
+.workshop-step-num {
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: #3b82f6;
+  color: white;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.workshop-step-title { font-weight: 600; font-size: 0.9rem; color: #f1f5f9; }
+.workshop-step-text { font-size: 0.82rem; color: #94a3b8; line-height: 1.4; }
+
+.workshop-code-block, .workshop-prompt-block {
+  position: relative;
+  margin-top: 0.5rem;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.workshop-code-block { background: #0f172a; border: 1px solid #334155; }
+.workshop-prompt-block { background: #0d1f35; border: 1px solid #1e3a5f; }
+
+.workshop-prompt-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #60a5fa;
+  padding: 0.4rem 0.7rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.workshop-code-block pre, .workshop-prompt-block pre {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.78rem;
+  color: #cbd5e1;
+  padding: 0.6rem 0.8rem 0.6rem 0.7rem;
+  margin: 0;
+  white-space: pre-wrap;
+  line-height: 1.5;
+  padding-right: 4rem;
+}
+
+.workshop-copy-btn {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  background: #334155;
+  color: #94a3b8;
+  border: none;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.workshop-copy-btn:hover { background: #475569; color: #e2e8f0; }
+
+.workshop-observe {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  padding: 0.6rem 0.8rem;
+  background: rgba(34, 197, 94, 0.08);
+  border-left: 3px solid #22c55e;
+  border-radius: 0 6px 6px 0;
+  color: #86efac;
+  line-height: 1.4;
+}
+
+.workshop-observe-label { font-weight: 600; white-space: nowrap; }
+
+.workshop-note {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  padding: 0.5rem 0.8rem;
+  background: rgba(59, 130, 246, 0.08);
+  border-left: 3px solid #3b82f6;
+  border-radius: 0 6px 6px 0;
+  color: #93c5fd;
+  line-height: 1.4;
+}
+
+.workshop-note-label { font-size: 1rem; }
+
+.workshop-warning {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  padding: 0.5rem 0.8rem;
+  background: rgba(245, 158, 11, 0.08);
+  border-left: 3px solid #f59e0b;
+  border-radius: 0 6px 6px 0;
+  color: #fcd34d;
+  line-height: 1.4;
+}
+
+.workshop-warning-label { font-size: 1rem; }
+
+.workshop-issue {
+  background: #1e293b;
+  border-radius: 8px;
+  padding: 0.8rem 1rem;
+  border-left: 3px solid #ef4444;
+}
+
+.workshop-issue-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #f87171;
+  margin-bottom: 0.5rem;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+@media print {
+  .workshop-sidebar { display: none; }
+  .workshop-page { height: auto; overflow: visible; }
+  .workshop-content { overflow: visible; }
+}

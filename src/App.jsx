@@ -1387,9 +1387,287 @@ function ActivationGuide() {
   )
 }
 
+const workshopParts = [
+  {
+    id: 'overview',
+    title: 'Overview',
+    icon: '🎯',
+    duration: null,
+    content: [
+      { type: 'intro', text: 'Build a Dev Diary app using Kiro with the configuration kit active. By the end you will have experienced every component of the kit in action.' },
+      { type: 'meta', label: 'Estimated time', value: '90–120 minutes' },
+      { type: 'meta', label: 'Sign in with', value: 'AWS Builder ID (free) — NOT the organization IAM Identity Center. Create one at profile.aws.amazon.com' },
+      { type: 'meta', label: 'Python version', value: 'Use Python 3.11 or 3.12 — do NOT use 3.13+ (SQLAlchemy compatibility issues, see Troubleshooting)' },
+      { type: 'heading', text: 'What You\'ll Build' },
+      { type: 'list', items: ['Create diary entries with title, content, mood, and tags', 'List entries with keyset pagination', 'Edit and soft-delete entries', 'Export entries as CSV'] },
+      { type: 'heading', text: 'Prerequisites' },
+      { type: 'list', items: ['Kiro installed and signed in with AWS Builder ID', 'Configuration kit (.kiro directory) in place', 'Python 3.11 or 3.12 + Node.js 18+'] },
+    ],
+  },
+  {
+    id: 'part1',
+    title: 'Part 1: Project Setup',
+    icon: '📁',
+    duration: '10 min',
+    content: [
+      { type: 'step', num: '1.1', title: 'Create the project', code: 'mkdir dev-diary\ncd dev-diary\ngit init' },
+      { type: 'step', num: '1.2', title: 'Copy the kit', text: 'Copy the .kiro directory from the kit repository into dev-diary/.' },
+      { type: 'step', num: '1.3', title: 'Open in Kiro', text: 'Open the dev-diary folder in Kiro. Click the Ghost icon → verify entity-standards, timezone-rules, and testing-standards are listed as auto-loaded.' },
+      { type: 'step', num: '1.4', title: 'Generate project context (safe prompt)', prompt: 'Create three steering files in .kiro/steering/:\n1. product.md — A Dev Diary app for developers to log daily entries with title, content, mood, and tags. Single-user for now.\n2. tech-stack.md — Python 3.11, FastAPI, SQLAlchemy, Alembic for migrations. React frontend with Vite.\n3. project-structure.md — backend/ for Python API, frontend/ for React app, tests/ for all tests.\n\nSet all to inclusion: auto. Do NOT include coding standards or conventions — those are in existing steering files.' },
+      { type: 'observe', text: 'Kiro creates only project-context files. The kit\'s coding standards remain untouched.' },
+    ],
+  },
+  {
+    id: 'part2',
+    title: 'Part 2: Database & Entity Design',
+    icon: '🗄️',
+    duration: '15 min',
+    content: [
+      { type: 'step', num: '2.1', title: 'Trigger the storage-selection skill', prompt: 'I need to choose a database for the Dev Diary app. It stores diary entries with title, content, mood, and tags per user.' },
+      { type: 'observe', text: 'The storage-selection skill activates and reasons through the decision. Single-user app → SQLite. Multi-user/hosted → PostgreSQL. Both are valid — accept the recommendation.' },
+      { type: 'step', num: '2.2', title: 'Create the DiaryEntry entity', prompt: 'Create a DiaryEntry entity with fields: title (string, max 200), content (text), mood (enum: great/good/okay/bad/terrible), tags (list of strings). Store it in a table called txn_diary_entries. Make sure to use all the steering files that are activated.' },
+      { type: 'observe', text: 'entity-standards.md adds audit fields automatically. timezone-rules.md enforces TIMESTAMPTZ. storage-design-rules.md enforces txn_ prefix, UUID key, snake_case.' },
+      { type: 'step', num: '2.3', title: 'Save the model file', text: 'Save backend/models/diary_entry.py — the unit-test-on-edit hook fires and generates unit tests.' },
+      { type: 'step', num: '2.4', title: 'Create the migration', prompt: 'Create an Alembic migration for the DiaryEntry model. Include indexes for user_id and created_date for efficient queries.' },
+    ],
+  },
+  {
+    id: 'part3',
+    title: 'Part 3: Make the Backend Runnable',
+    icon: '⚙️',
+    duration: '10 min',
+    content: [
+      { type: 'step', num: '3.1', title: 'Create wiring files', prompt: 'Create the files needed to run the FastAPI backend:\n- backend/main.py — FastAPI app with CORS middleware, dependency wiring, and router registration\n- backend/db.py — SQLAlchemy engine and get_db session dependency\n- backend/requirements.txt — pinned dependencies\n\nWire up the _get_db and _current_user_id placeholders from the handlers.' },
+      { type: 'step', num: '3.2', title: 'Set up virtual environment', code: 'cd backend\npython3 -m venv .venv\nsource .venv/bin/activate\npip install -r requirements.txt' },
+      { type: 'note', text: 'Run source backend/.venv/bin/activate every time you open a new terminal.' },
+      { type: 'step', num: '3.3', title: 'Run migrations', code: 'alembic upgrade head' },
+      { type: 'warning', text: 'If you see "table txn_diary_entries already exists": run alembic stamp 0001 then alembic upgrade head' },
+      { type: 'step', num: '3.4', title: 'Start the backend', code: 'python -m uvicorn main:app --reload' },
+      { type: 'note', text: 'API at http://localhost:8000 — Interactive docs at http://localhost:8000/docs' },
+    ],
+  },
+  {
+    id: 'part4',
+    title: 'Part 4: API Handlers',
+    icon: '🔌',
+    duration: '20 min',
+    content: [
+      { type: 'step', num: '4.1', title: 'Create CRUD handlers', prompt: 'Create FastAPI handlers for DiaryEntry:\n- POST /entries — create a new entry\n- GET /entries — list entries for the current user (paginated, keyset pagination)\n- GET /entries/{id} — get a single entry\n- PUT /entries/{id} — update an entry\n- DELETE /entries/{id} — soft delete an entry\n\nPut them in backend/handlers/entries.py' },
+      { type: 'observe', text: 'Kiro reads files and steering rules first, then applies: entity-standards (audit fields, soft delete), query-safety-rules (ORM only, no string interpolation), timezone-rules (utc_now, UTC offset), storage-design-rules (keyset pagination, no OFFSET). Note: qa-element-id-rules is correctly skipped — frontend-only.' },
+      { type: 'note', text: 'Kiro generates _get_db and _current_user_id placeholders — wire these to your real session and auth logic.' },
+      { type: 'step', num: '4.2', title: 'Save the handler file', text: 'Save backend/handlers/entries.py — TWO hooks fire: unit-test-on-edit (unit tests) and security-test-on-handler (security tests with @pytest.mark.security).' },
+      { type: 'step', num: '4.3', title: 'Test SQL keyword handling', prompt: 'Write a test that creates a diary entry with the title "Execute the deployment plan" and content containing "SELECT the best approach, DROP old habits, GRANT yourself permission to learn". Verify the entry is created successfully — SQL keywords in user data must be accepted.' },
+      { type: 'observe', text: 'Kiro places the test in test_entries_security.py inside the existing TestQuerySafety class. ~0.74 credits, ~21 seconds.' },
+    ],
+  },
+  {
+    id: 'part5',
+    title: 'Part 5: Run the Tests',
+    icon: '🧪',
+    duration: '10 min',
+    content: [
+      { type: 'step', num: '5.1', title: 'Install test dependencies', code: 'pip install pytest pytest-asyncio httpx pytest-cov' },
+      { type: 'step', num: '5.2', title: 'Run all tests', code: 'pytest tests/ -v' },
+      { type: 'step', num: '5.3', title: 'Run security tests only', code: 'pytest tests/ -v -m security' },
+      { type: 'step', num: '5.4', title: 'Run with coverage', code: 'pytest tests/ --cov=backend --cov-report=term-missing' },
+      { type: 'observe', text: 'Check: all tests green, @pytest.mark.security tests visible, coverage ≥ 90%, SQL keyword test passes.' },
+      { type: 'step', num: '5.5', title: 'Run regression tests', code: 'pytest tests/ -v -m regression' },
+    ],
+  },
+  {
+    id: 'part6',
+    title: 'Part 6: CSV Export',
+    icon: '📊',
+    duration: '10 min',
+    content: [
+      { type: 'step', num: '6.1', title: 'Activate report-generation-rules and build export', prompt: '#report-generation-rules\n\nI need to add a CSV export feature for diary entries. Users can export their entries for a date range.' },
+      { type: 'observe', text: 'Kiro classifies this as a light report — synchronous, query primary DB, paginate, set query timeout, return CSV directly. No async job queue needed. Datetimes follow timezone-rules (user\'s local timezone).' },
+    ],
+  },
+  {
+    id: 'part7',
+    title: 'Part 7: Frontend',
+    icon: '🖥️',
+    duration: '15 min',
+    content: [
+      { type: 'step', num: '7.1', title: 'Scaffold the React frontend', prompt: 'Create a React frontend with Vite in the frontend/ directory. Include:\n- A diary entry list page with keyset pagination\n- A create/edit entry form with title, content, mood selector, and tags input\n- A delete button that soft-deletes (calls DELETE endpoint)\n- Display dates in the user\'s local timezone\n- Proxy /entries requests to http://localhost:8000 in vite.config.js' },
+      { type: 'observe', text: 'timezone-rules.md converts UTC to local for display. qa-element-id-rules.md loads on .jsx/.tsx files and adds data-testid attributes.' },
+      { type: 'step', num: '7.2', title: 'Start the frontend (separate terminal)', code: 'cd frontend\nnpm install\nnpm run dev' },
+      { type: 'note', text: 'App at http://localhost:5173. Vite proxies /entries to http://localhost:8000 — no CORS issues.' },
+      { type: 'step', num: '7.3', title: 'Verify data-testid attributes', text: 'Check generated components for: entry-list-create-button, entry-form-title-input, entry-form-content-textarea, entry-form-mood-select, entry-form-submit-button, entry-card-delete-button-{entry.id}' },
+    ],
+  },
+  {
+    id: 'part8',
+    title: 'Part 8: Concurrency',
+    icon: '🔒',
+    duration: '10 min',
+    content: [
+      { type: 'step', num: '8.1', title: 'Add optimistic concurrency', prompt: '#concurrency-and-locking-rules\n\nAdd optimistic concurrency to the DiaryEntry update handler. Two browser tabs editing the same entry should not silently overwrite each other.' },
+      { type: 'observe', text: 'Kiro adds a version column (migration 0002), version check on every update, and the frontend sends the current version. Mismatched version → ConflictError.' },
+      { type: 'step', num: '8.2', title: 'Run the new migration', code: 'cd backend\nsource .venv/bin/activate\nalembic upgrade head' },
+    ],
+  },
+  {
+    id: 'troubleshooting',
+    title: 'Troubleshooting',
+    icon: '🔧',
+    duration: null,
+    content: [
+      { type: 'issue', title: 'zsh: command not found: uvicorn', fix: 'python -m uvicorn main:app --reload' },
+      { type: 'issue', title: 'No module named uvicorn', fix: 'source backend/.venv/bin/activate\npip install -r requirements.txt\npython -m uvicorn main:app --reload' },
+      { type: 'issue', title: "TypeError: Can't replace canonical symbol for '__firstlineno__' (Python 3.14)", fix: 'pip install -r requirements.txt --upgrade\n# requirements.txt is pinned to sqlalchemy==2.0.49\n# Recommended: use Python 3.11 or 3.12' },
+      { type: 'issue', title: "TypeError: descriptor '__getitem__' requires a 'typing.Union' object (Python 3.14)", fix: '# In models/base.py — replace X | None with Optional[X]\nfrom typing import Optional\ndeleted_at: Mapped[Optional[datetime]] = ...' },
+      { type: 'issue', title: "ModuleNotFoundError: No module named 'models' (Alembic)", fix: '# In migrations/env.py — add at the top:\nimport sys, os\nsys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))' },
+      { type: 'issue', title: 'sqlalchemy.exc.OperationalError: table txn_diary_entries already exists', fix: 'alembic stamp 0001\nalembic upgrade head' },
+    ],
+  },
+]
+
+function WorkshopGuide() {
+  const [activePart, setActivePart] = useState('overview')
+  const [copiedIdx, setCopiedIdx] = useState(null)
+
+  const copyToClipboard = (text, idx) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedIdx(idx)
+      setTimeout(() => setCopiedIdx(null), 2000)
+    })
+  }
+
+  const part = workshopParts.find(p => p.id === activePart)
+
+  return (
+    <div className="workshop-page">
+      <div className="workshop-sidebar">
+        <div className="workshop-sidebar-title">🛠️ Workshop</div>
+        {workshopParts.map(p => (
+          <button
+            key={p.id}
+            className={`workshop-nav-item ${activePart === p.id ? 'active' : ''}`}
+            onClick={() => setActivePart(p.id)}
+            data-testid={`workshop-guide-nav-${p.id}-button`}
+          >
+            <span className="workshop-nav-icon">{p.icon}</span>
+            <span className="workshop-nav-label">{p.title}</span>
+            {p.duration && <span className="workshop-nav-duration">{p.duration}</span>}
+          </button>
+        ))}
+      </div>
+      <div className="workshop-content">
+        <div className="workshop-part-header">
+          <span className="workshop-part-icon">{part.icon}</span>
+          <h2>{part.title}</h2>
+          {part.duration && <span className="workshop-part-duration">{part.duration}</span>}
+        </div>
+        <div className="workshop-body">
+          {part.content.map((item, i) => {
+            if (item.type === 'intro') return <p key={i} className="workshop-intro">{item.text}</p>
+            if (item.type === 'meta') return (
+              <div key={i} className="workshop-meta">
+                <span className="workshop-meta-label">{item.label}:</span>
+                <span className="workshop-meta-value">{item.value}</span>
+              </div>
+            )
+            if (item.type === 'heading') return <h3 key={i} className="workshop-heading">{item.text}</h3>
+            if (item.type === 'list') return (
+              <ul key={i} className="workshop-list">
+                {item.items.map((li, j) => <li key={j}>{li}</li>)}
+              </ul>
+            )
+            if (item.type === 'step') return (
+              <div key={i} className="workshop-step">
+                <div className="workshop-step-header">
+                  <span className="workshop-step-num">Step {item.num}</span>
+                  <span className="workshop-step-title">{item.title}</span>
+                </div>
+                {item.text && <p className="workshop-step-text">{item.text}</p>}
+                {item.code && (
+                  <div className="workshop-code-block">
+                    <pre>{item.code}</pre>
+                    <button className="workshop-copy-btn" onClick={() => copyToClipboard(item.code, `code-${i}`)} data-testid={`workshop-guide-copy-code-${i}-button`}>
+                      {copiedIdx === `code-${i}` ? '✓ Copied' : 'Copy'}
+                    </button>
+                  </div>
+                )}
+                {item.prompt && (
+                  <div className="workshop-prompt-block">
+                    <div className="workshop-prompt-label">💬 Kiro Chat Prompt</div>
+                    <pre>{item.prompt}</pre>
+                    <button className="workshop-copy-btn" onClick={() => copyToClipboard(item.prompt, `prompt-${i}`)} data-testid={`workshop-guide-copy-prompt-${i}-button`}>
+                      {copiedIdx === `prompt-${i}` ? '✓ Copied' : 'Copy'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )
+            if (item.type === 'observe') return (
+              <div key={i} className="workshop-observe">
+                <span className="workshop-observe-label">👁 What to observe:</span>
+                <span>{item.text}</span>
+              </div>
+            )
+            if (item.type === 'note') return (
+              <div key={i} className="workshop-note">
+                <span className="workshop-note-label">ℹ️</span>
+                <span>{item.text}</span>
+              </div>
+            )
+            if (item.type === 'warning') return (
+              <div key={i} className="workshop-warning">
+                <span className="workshop-warning-label">⚠️</span>
+                <span>{item.text}</span>
+              </div>
+            )
+            if (item.type === 'issue') return (
+              <div key={i} className="workshop-issue">
+                <div className="workshop-issue-title">{item.title}</div>
+                <div className="workshop-code-block">
+                  <pre>{item.fix}</pre>
+                  <button className="workshop-copy-btn" onClick={() => copyToClipboard(item.fix, `fix-${i}`)} data-testid={`workshop-guide-copy-fix-${i}-button`}>
+                    {copiedIdx === `fix-${i}` ? '✓ Copied' : 'Copy'}
+                  </button>
+                </div>
+              </div>
+            )
+            return null
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function AuthenticatedApp() {
   const [authed, setAuthed] = useState(() => sessionStorage.getItem('authenticated') === 'true')
   const [page, setPage] = useState('presentation')
+  const [workshopAuthed, setWorkshopAuthed] = useState(() => sessionStorage.getItem('workshop-authenticated') === 'true')
+  const [workshopPassword, setWorkshopPassword] = useState('')
+  const [workshopError, setWorkshopError] = useState('')
+  const [workshopLoading, setWorkshopLoading] = useState(false)
+
+  const handleWorkshopAuth = async (e) => {
+    e.preventDefault()
+    setWorkshopLoading(true)
+    setWorkshopError('')
+    try {
+      const res = await fetch('/api/auth-workshop', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: workshopPassword }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        sessionStorage.setItem('workshop-authenticated', 'true')
+        setWorkshopAuthed(true)
+      } else {
+        setWorkshopError('Invalid workshop password')
+      }
+    } catch {
+      setWorkshopError('Connection error')
+    }
+    setWorkshopLoading(false)
+  }
 
   if (!authed) {
     return <LoginGate onAuth={() => setAuthed(true)} />
@@ -1400,8 +1678,35 @@ function AuthenticatedApp() {
       <nav className="top-nav" data-testid="authenticated-app-top-nav">
         <button className={page === 'presentation' ? 'nav-active' : ''} onClick={() => setPage('presentation')} data-testid="authenticated-app-nav-training-button">📊 Training</button>
         <button className={page === 'guide' ? 'nav-active' : ''} onClick={() => setPage('guide')} data-testid="authenticated-app-nav-guide-button">📖 Activation Guide</button>
+        <button className={page === 'workshop' ? 'nav-active' : ''} onClick={() => setPage('workshop')} data-testid="authenticated-app-nav-workshop-button">🛠️ Workshop</button>
       </nav>
-      {page === 'presentation' ? <App /> : <ActivationGuide />}
+      {page === 'presentation' && <App />}
+      {page === 'guide' && <ActivationGuide />}
+      {page === 'workshop' && (
+        workshopAuthed
+          ? <WorkshopGuide />
+          : (
+            <div className="login-gate">
+              <form className="login-form" onSubmit={handleWorkshopAuth} data-testid="workshop-gate-form">
+                <div className="login-icon">🛠️</div>
+                <h2>Workshop Access</h2>
+                <p>Enter the workshop password to continue.</p>
+                <input
+                  type="password"
+                  value={workshopPassword}
+                  onChange={(e) => setWorkshopPassword(e.target.value)}
+                  placeholder="Workshop password"
+                  autoFocus
+                  data-testid="workshop-gate-password-input"
+                />
+                {workshopError && <div className="login-error" data-testid="workshop-gate-error">{workshopError}</div>}
+                <button type="submit" disabled={workshopLoading || !workshopPassword} data-testid="workshop-gate-submit-button">
+                  {workshopLoading ? 'Verifying...' : 'Enter'}
+                </button>
+              </form>
+            </div>
+          )
+      )}
     </>
   )
 }

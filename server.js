@@ -19,6 +19,16 @@ app.post('/api/auth', (req, res) => {
   }
 })
 
+app.post('/api/auth-workshop', (req, res) => {
+  const { password } = req.body
+  const workshopPassword = ACCESS_PASSWORD.split('').reverse().join('')
+  if (password === workshopPassword) {
+    res.json({ success: true })
+  } else {
+    res.status(401).json({ success: false, message: 'Invalid workshop password' })
+  }
+})
+
 app.get('/{*splat}', (req, res) => {
   res.sendFile(join(__dirname, 'dist', 'index.html'))
 })
