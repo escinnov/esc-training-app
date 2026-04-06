@@ -1405,6 +1405,88 @@ const workshopParts = [
     ],
   },
   {
+    id: 'techstack',
+    title: 'Tech Stack',
+    icon: '📦',
+    duration: null,
+    content: [
+      { type: 'intro', text: 'Every framework in this workshop was chosen deliberately. Here\'s what each one does and why it was selected.' },
+      {
+        type: 'techitem',
+        name: 'FastAPI',
+        layer: 'API Layer',
+        color: '#22c55e',
+        why: 'Generates interactive API docs automatically (/docs), has built-in request validation via Pydantic, supports async natively, and is one of the fastest Python frameworks. The handler structure maps directly to the **/handlers/**/*.py pattern that triggers the security hook.',
+        vs: 'Flask (simpler but no auto-docs, no async) or Django (heavier, better for full-stack apps than pure APIs)',
+      },
+      {
+        type: 'techitem',
+        name: 'SQLAlchemy',
+        layer: 'ORM',
+        color: '#3b82f6',
+        why: 'Makes parameterized queries the default — you write filter(User.name == user_input) and SQLAlchemy handles parameterization. This is exactly what query-safety-rules.md enforces. Also abstracts the database engine so the same code works with SQLite (workshop) and PostgreSQL (production) by just changing the connection string.',
+        vs: 'Raw SQL (injection-prone without discipline) or Django ORM (tied to Django)',
+      },
+      {
+        type: 'techitem',
+        name: 'Pydantic',
+        layer: 'Validation',
+        color: '#8b5cf6',
+        why: 'Bundled with FastAPI. Powers the @field_validator that entity-standards.md uses for input sanitization — stripping < > & " \' from string fields. Also enforces Field(min_length, max_length) constraints automatically. Without it, you\'d write manual validation for every field.',
+        vs: 'Manual validation (error-prone, verbose) or Marshmallow (older, less integrated with FastAPI)',
+      },
+      {
+        type: 'techitem',
+        name: 'Alembic',
+        layer: 'Migrations',
+        color: '#f59e0b',
+        why: 'Manages schema changes as versioned migration files. When you add a version column for optimistic concurrency, Alembic creates migration 0002 that can be applied to any environment. Has rollback, history, and incremental changes — required for production. The workshop demonstrates the problem without it: create_all() runs on startup, then Alembic tries to create the same tables again and fails.',
+        vs: 'Base.metadata.create_all() — fine for prototypes but no rollback, no history, no incremental changes to live databases',
+        note: 'The Python 3.14 compatibility issue was a temporary ecosystem lag (SQLAlchemy 2.0.30–2.0.40), already resolved in 2.0.49+. Alembic itself is stable and widely used in production.',
+      },
+      {
+        type: 'techitem',
+        name: 'SQLite',
+        layer: 'Database',
+        color: '#06b6d4',
+        why: 'File-based database that ships with Python\'s standard library — zero installation, zero configuration. The storage-selection skill correctly recommends it for a single-user local app. Not a toy — used in production by browsers, mobile apps, and embedded systems. SQLAlchemy abstraction means swapping to PostgreSQL later is just a connection string change.',
+        vs: 'PostgreSQL (better for multi-user/production but requires a running server)',
+      },
+      {
+        type: 'techitem',
+        name: 'React',
+        layer: 'Frontend UI',
+        color: '#60a5fa',
+        why: 'Most widely used frontend library. The qa-element-id-rules.md steering file has React/JSX examples, and the qa-element-ids hook targets .jsx/.tsx files. Component-based structure maps naturally to the data-testid naming convention ({component}-{element}-{descriptor}).',
+        vs: 'Vue or Svelte (also supported by the kit\'s hooks) or plain HTML (no component model)',
+      },
+      {
+        type: 'techitem',
+        name: 'Vite',
+        layer: 'Build / Dev Server',
+        color: '#a78bfa',
+        why: 'Significantly faster than Create React App (deprecated). Has native ES module support. Critically: built-in proxy configuration in vite.config.js proxies /entries to http://localhost:8000, so the frontend and backend can run on different ports without CORS issues during development.',
+        vs: 'Create React App (deprecated, slow) or webpack (complex configuration)',
+      },
+      {
+        type: 'techitem',
+        name: 'Uvicorn',
+        layer: 'ASGI Server',
+        color: '#34d399',
+        why: 'Standard ASGI server for FastAPI. FastAPI is async-capable (ASGI), and Uvicorn is its runtime. The --reload flag watches for file changes and restarts automatically during development. Not a framework you interact with directly — it\'s what serves the API.',
+        vs: 'Gunicorn (WSGI, no async support) or Hypercorn (less common)',
+      },
+      {
+        type: 'techitem',
+        name: 'pytest',
+        layer: 'Testing',
+        color: '#fb923c',
+        why: 'Standard Python testing framework. testing-standards.md uses pytest conventions (@pytest.mark.security, @pytest.mark.regression), and both hooks generate pytest-compatible test files. pytest-cov provides coverage reports that verify the 90% coverage target.',
+        vs: 'unittest (built-in but verbose) or nose (deprecated)',
+      },
+    ],
+  },
+  {
     id: 'part1',
     title: 'Part 1: Project Setup',
     icon: '📁',
@@ -1413,7 +1495,7 @@ const workshopParts = [
       { type: 'step', num: '1.1', title: 'Create the project', code: 'mkdir dev-diary\ncd dev-diary\ngit init' },
       { type: 'step', num: '1.2', title: 'Copy the kit', text: 'Copy the .kiro directory from the kit repository into dev-diary/.' },
       { type: 'step', num: '1.3', title: 'Open in Kiro', text: 'Open the dev-diary folder in Kiro. Click the Ghost icon → verify entity-standards, timezone-rules, and testing-standards are listed as auto-loaded.' },
-      { type: 'step', num: '1.4', title: 'Generate project context (safe prompt)', prompt: 'Create three steering files in .kiro/steering/:\n1. product.md — A Dev Diary app for developers to log daily entries with title, content, mood, and tags. Single-user for now.\n2. tech-stack.md — Python 3.11, FastAPI, SQLAlchemy, Alembic for migrations. React frontend with Vite.\n3. project-structure.md — backend/ for Python API, frontend/ for React app, tests/ for all tests.\n\nSet all to inclusion: auto. Do NOT include coding standards or conventions — those are in existing steering files.' },
+      { type: 'step', num: '1.4', title: 'Generate project context (safe prompt)', prompt: 'Create three steering files in .kiro/steering/:\n1. product.md — A Dev Diary app for developers to log daily entries with title, content, mood, and tags. Single-user for now.\n2. tech-stack.md — Python 3.11, FastAPI, SQLAlchemy, Alembic for migrations. React frontend with Vite.\n3. project-structure.md — backend/ for Python API, frontend/ for React app, tests/ for all tests.\n\nSet all to inclusion: auto. Do NOT include coding standards or conventions — those are in existing steering files.', promptExplain: 'We ask for three specific files instead of clicking "Generate Steering Docs" because the button creates generic files that can conflict with the kit\'s curated rules. By writing the prompt ourselves we control exactly what gets created. The "Do NOT include coding standards" instruction is critical — it prevents Kiro from duplicating entity-standards, timezone-rules, or testing-standards that are already in the kit. The inclusion: auto instruction tells Kiro to load these files in every interaction so it always knows what the project is and what tech it uses.' },
       { type: 'observe', text: 'Kiro creates only project-context files. The kit\'s coding standards remain untouched.' },
     ],
   },
@@ -1423,12 +1505,12 @@ const workshopParts = [
     icon: '🗄️',
     duration: '15 min',
     content: [
-      { type: 'step', num: '2.1', title: 'Trigger the storage-selection skill', prompt: 'I need to choose a database for the Dev Diary app. It stores diary entries with title, content, mood, and tags per user.' },
+      { type: 'step', num: '2.1', title: 'Trigger the storage-selection skill', prompt: 'I need to choose a database for the Dev Diary app. It stores diary entries with title, content, mood, and tags per user.', promptExplain: 'This prompt is intentionally brief. We don\'t specify the database — we let the storage-selection skill ask the right questions and reason through the decision based on our project context. Mentioning "database" triggers the skill keyword. The skill reads product.md (single-user app) and reasons through data model, query patterns, and deployment needs. For a single-user local app it correctly recommends SQLite. For a multi-user hosted app it recommends PostgreSQL. The skill prevents gut-feel choices like "just use Postgres" when SQLite is actually the right fit.' },
       { type: 'observe', text: 'The storage-selection skill activates and reasons through the decision. Single-user app → SQLite. Multi-user/hosted → PostgreSQL. Both are valid — accept the recommendation.' },
-      { type: 'step', num: '2.2', title: 'Create the DiaryEntry entity', prompt: 'Create a DiaryEntry entity with fields: title (string, max 200), content (text), mood (enum: great/good/okay/bad/terrible), tags (list of strings). Store it in a table called txn_diary_entries. Make sure to use all the steering files that are activated.' },
+      { type: 'step', num: '2.2', title: 'Create the DiaryEntry entity', prompt: 'Create a DiaryEntry entity with fields: title (string, max 200), content (text), mood (enum: great/good/okay/bad/terrible), tags (list of strings). Store it in a table called txn_diary_entries. Make sure to use all the steering files that are activated.', promptExplain: 'We specify the business fields only — title, content, mood, tags. We do NOT ask for id, created_date, modified_date, created_by, modified_by, or deleted_at because entity-standards.md adds those automatically. The "txn_" prefix is specified because storage-design-rules.md requires it for transactional data. The "Make sure to use all the steering files" instruction is a reminder to Kiro to apply all active rules — entity-standards, timezone-rules, and storage-design-rules — not just generate a plain model.' },
       { type: 'observe', text: 'entity-standards.md adds audit fields automatically. timezone-rules.md enforces TIMESTAMPTZ. storage-design-rules.md enforces txn_ prefix, UUID key, snake_case.' },
       { type: 'step', num: '2.3', title: 'Save the model file', text: 'Save backend/models/diary_entry.py — the unit-test-on-edit hook fires and generates unit tests.' },
-      { type: 'step', num: '2.4', title: 'Create the migration', prompt: 'Create an Alembic migration for the DiaryEntry model. Include indexes for user_id and created_date for efficient queries.' },
+      { type: 'step', num: '2.4', title: 'Create the migration', prompt: 'Create an Alembic migration for the DiaryEntry model. Include indexes for user_id and created_date for efficient queries.', promptExplain: 'We explicitly ask for indexes on user_id and created_date because these are the columns we will query most — list entries by user, paginate by date. storage-design-rules.md requires index-first design, but we still specify the columns so Kiro knows our access patterns. Without this instruction, Kiro might create the table without indexes, which would cause full table scans on every list query.' },
     ],
   },
   {
@@ -1437,7 +1519,7 @@ const workshopParts = [
     icon: '⚙️',
     duration: '10 min',
     content: [
-      { type: 'step', num: '3.1', title: 'Create wiring files', prompt: 'Create the files needed to run the FastAPI backend:\n- backend/main.py — FastAPI app with CORS middleware, dependency wiring, and router registration\n- backend/db.py — SQLAlchemy engine and get_db session dependency\n- backend/requirements.txt — pinned dependencies\n\nWire up the _get_db and _current_user_id placeholders from the handlers.' },
+      { type: 'step', num: '3.1', title: 'Create wiring files', prompt: 'Create the files needed to run the FastAPI backend:\n- backend/main.py — FastAPI app with CORS middleware, dependency wiring, and router registration\n- backend/db.py — SQLAlchemy engine and get_db session dependency\n- backend/requirements.txt — pinned dependencies\n\nWire up the _get_db and _current_user_id placeholders from the handlers.', promptExplain: 'When Kiro generated the handlers in Part 4, it created placeholder dependencies (_get_db, _current_user_id) because it doesn\'t assume your auth or database setup. This prompt creates the actual implementations. We list the three files explicitly so Kiro creates all of them in one pass. The "Wire up the placeholders" instruction tells Kiro to connect the handlers to the real session and auth logic — without this, the API would fail on every request because the dependencies are unresolved.' },
       { type: 'step', num: '3.2', title: 'Set up virtual environment', code: 'cd backend\npython3 -m venv .venv\nsource .venv/bin/activate\npip install -r requirements.txt' },
       { type: 'note', text: 'Run source backend/.venv/bin/activate every time you open a new terminal.' },
       { type: 'step', num: '3.3', title: 'Run migrations', code: 'alembic upgrade head' },
@@ -1452,11 +1534,11 @@ const workshopParts = [
     icon: '🔌',
     duration: '20 min',
     content: [
-      { type: 'step', num: '4.1', title: 'Create CRUD handlers', prompt: 'Create FastAPI handlers for DiaryEntry:\n- POST /entries — create a new entry\n- GET /entries — list entries for the current user (paginated, keyset pagination)\n- GET /entries/{id} — get a single entry\n- PUT /entries/{id} — update an entry\n- DELETE /entries/{id} — soft delete an entry\n\nPut them in backend/handlers/entries.py' },
+      { type: 'step', num: '4.1', title: 'Create CRUD handlers', prompt: 'Create FastAPI handlers for DiaryEntry:\n- POST /entries — create a new entry\n- GET /entries — list entries for the current user (paginated, keyset pagination)\n- GET /entries/{id} — get a single entry\n- PUT /entries/{id} — update an entry\n- DELETE /entries/{id} — soft delete an entry\n\nPut them in backend/handlers/entries.py', promptExplain: 'We list all five endpoints explicitly so Kiro generates a complete CRUD surface in one pass. "Paginated, keyset pagination" is specified because storage-design-rules.md requires it — but we reinforce it in the prompt so Kiro doesn\'t default to OFFSET pagination. "Soft delete" is specified for the DELETE endpoint because entity-standards.md requires it, but being explicit prevents Kiro from generating a hard delete. The file path (backend/handlers/entries.py) is specified so the file lands in the handlers/ directory, which triggers the security-test-on-handler hook and loads query-safety-rules.md via fileMatch.' },
       { type: 'observe', text: 'Kiro reads files and steering rules first, then applies: entity-standards (audit fields, soft delete), query-safety-rules (ORM only, no string interpolation), timezone-rules (utc_now, UTC offset), storage-design-rules (keyset pagination, no OFFSET). Note: qa-element-id-rules is correctly skipped — frontend-only.' },
       { type: 'note', text: 'Kiro generates _get_db and _current_user_id placeholders — wire these to your real session and auth logic.' },
       { type: 'step', num: '4.2', title: 'Save the handler file', text: 'Save backend/handlers/entries.py — TWO hooks fire: unit-test-on-edit (unit tests) and security-test-on-handler (security tests with @pytest.mark.security).' },
-      { type: 'step', num: '4.3', title: 'Test SQL keyword handling', prompt: 'Write a test that creates a diary entry with the title "Execute the deployment plan" and content containing "SELECT the best approach, DROP old habits, GRANT yourself permission to learn". Verify the entry is created successfully — SQL keywords in user data must be accepted.' },
+      { type: 'step', num: '4.3', title: 'Test SQL keyword handling', prompt: 'Write a test that creates a diary entry with the title "Execute the deployment plan" and content containing "SELECT the best approach, DROP old habits, GRANT yourself permission to learn". Verify the entry is created successfully — SQL keywords in user data must be accepted.', promptExplain: 'This prompt tests a specific real-world scenario — a developer named their task "Execute the deployment plan" and the app rejected it because of a keyword blocklist. The prompt uses real SQL keywords (EXECUTE, SELECT, DROP, GRANT) in natural language context to prove they are harmless when queries are parameterized. The "must be accepted" instruction tells Kiro this is a positive test — the entry should be created successfully, not rejected. This directly validates query-safety-rules.md\'s core principle: parameterize queries, never blocklist keywords.' },
       { type: 'observe', text: 'Kiro places the test in test_entries_security.py inside the existing TestQuerySafety class. ~0.74 credits, ~21 seconds.' },
     ],
   },
@@ -1480,7 +1562,7 @@ const workshopParts = [
     icon: '📊',
     duration: '10 min',
     content: [
-      { type: 'step', num: '6.1', title: 'Activate report-generation-rules and build export', prompt: '#report-generation-rules\n\nI need to add a CSV export feature for diary entries. Users can export their entries for a date range.' },
+      { type: 'step', num: '6.1', title: 'Activate report-generation-rules and build export', prompt: '#report-generation-rules\n\nI need to add a CSV export feature for diary entries. Users can export their entries for a date range.', promptExplain: 'The #report-generation-rules prefix manually activates the steering file for this session. Without it, Kiro would build the export without the light/heavy classification framework — potentially generating an async job queue for a simple user-scoped export that doesn\'t need it. With the steering active, Kiro classifies this as a light report (< 10K rows, user-scoped, < 5 seconds) and implements it synchronously. The "date range" detail is important — it tells Kiro the export needs date filtering, which triggers the timezone-rules for converting date boundaries to UTC.' },
       { type: 'observe', text: 'Kiro classifies this as a light report — synchronous, query primary DB, paginate, set query timeout, return CSV directly. No async job queue needed. Datetimes follow timezone-rules (user\'s local timezone).' },
     ],
   },
@@ -1490,7 +1572,7 @@ const workshopParts = [
     icon: '🖥️',
     duration: '15 min',
     content: [
-      { type: 'step', num: '7.1', title: 'Scaffold the React frontend', prompt: 'Create a React frontend with Vite in the frontend/ directory. Include:\n- A diary entry list page with keyset pagination\n- A create/edit entry form with title, content, mood selector, and tags input\n- A delete button that soft-deletes (calls DELETE endpoint)\n- Display dates in the user\'s local timezone\n- Proxy /entries requests to http://localhost:8000 in vite.config.js' },
+      { type: 'step', num: '7.1', title: 'Scaffold the React frontend', prompt: 'Create a React frontend with Vite in the frontend/ directory. Include:\n- A diary entry list page with keyset pagination\n- A create/edit entry form with title, content, mood selector, and tags input\n- A delete button that soft-deletes (calls DELETE endpoint)\n- Display dates in the user\'s local timezone\n- Proxy /entries requests to http://localhost:8000 in vite.config.js', promptExplain: 'Each bullet in this prompt serves a specific purpose. "Keyset pagination" reinforces storage-design-rules. "Soft-deletes (calls DELETE endpoint)" ensures the frontend uses the soft delete endpoint, not a client-side removal. "Display dates in the user\'s local timezone" triggers timezone-rules — Kiro will add UTC-to-local conversion logic. "Proxy /entries requests" is the key instruction that eliminates CORS issues — without it, the frontend would fail to reach the backend during development because they run on different ports (5173 vs 8000). The frontend/ directory path ensures .jsx files land where the qa-element-ids hook and qa-element-id-rules.md fileMatch will trigger.' },
       { type: 'observe', text: 'timezone-rules.md converts UTC to local for display. qa-element-id-rules.md loads on .jsx/.tsx files and adds data-testid attributes.' },
       { type: 'step', num: '7.2', title: 'Start the frontend (separate terminal)', code: 'cd frontend\nnpm install\nnpm run dev' },
       { type: 'note', text: 'App at http://localhost:5173. Vite proxies /entries to http://localhost:8000 — no CORS issues.' },
@@ -1503,7 +1585,7 @@ const workshopParts = [
     icon: '🔒',
     duration: '10 min',
     content: [
-      { type: 'step', num: '8.1', title: 'Add optimistic concurrency', prompt: '#concurrency-and-locking-rules\n\nAdd optimistic concurrency to the DiaryEntry update handler. Two browser tabs editing the same entry should not silently overwrite each other.' },
+      { type: 'step', num: '8.1', title: 'Add optimistic concurrency', prompt: '#concurrency-and-locking-rules\n\nAdd optimistic concurrency to the DiaryEntry update handler. Two browser tabs editing the same entry should not silently overwrite each other.', promptExplain: 'The #concurrency-and-locking-rules prefix activates the manual steering file. The "two browser tabs" scenario is a concrete, relatable description of the problem — it\'s more useful than saying "add a version column" because it tells Kiro the user-facing behavior we want. Kiro then decides the implementation: version column, version check on PUT, ConflictError on mismatch, and frontend sending the current version. "Silently overwrite" is the key phrase — it tells Kiro we want the conflict to be surfaced to the user, not swallowed.' },
       { type: 'observe', text: 'Kiro adds a version column (migration 0002), version check on every update, and the frontend sends the current version. Mismatched version → ConflictError.' },
       { type: 'step', num: '8.2', title: 'Run the new migration', code: 'cd backend\nsource .venv/bin/activate\nalembic upgrade head' },
     ],
@@ -1599,6 +1681,12 @@ function WorkshopGuide() {
                     </button>
                   </div>
                 )}
+                {item.promptExplain && (
+                  <div className="workshop-prompt-explain">
+                    <span className="workshop-prompt-explain-label">🧠 Why this prompt:</span>
+                    <span>{item.promptExplain}</span>
+                  </div>
+                )}
               </div>
             )
             if (item.type === 'observe') return (
@@ -1628,6 +1716,27 @@ function WorkshopGuide() {
                     {copiedIdx === `fix-${i}` ? '✓ Copied' : 'Copy'}
                   </button>
                 </div>
+              </div>
+            )
+            if (item.type === 'techitem') return (
+              <div key={i} className="workshop-techitem">
+                <div className="workshop-techitem-header">
+                  <span className="workshop-techitem-dot" style={{ background: item.color }} />
+                  <span className="workshop-techitem-name">{item.name}</span>
+                  <span className="workshop-techitem-layer">{item.layer}</span>
+                </div>
+                <div className="workshop-techitem-why">
+                  <span className="workshop-techitem-label">Why:</span> {item.why}
+                </div>
+                <div className="workshop-techitem-vs">
+                  <span className="workshop-techitem-label">vs:</span> {item.vs}
+                </div>
+                {item.note && (
+                  <div className="workshop-note" style={{ marginTop: '0.4rem' }}>
+                    <span className="workshop-note-label">ℹ️</span>
+                    <span>{item.note}</span>
+                  </div>
+                )}
               </div>
             )
             return null
