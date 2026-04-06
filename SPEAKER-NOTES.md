@@ -29,17 +29,19 @@
 ## Slide 5: Hooks Deep Dive
 
 - Walk through each hook:
-  - unit-test-on-edit: saves you from the "I'll write tests later" trap. Every Python file save checks for tests and generates missing ones.
-  - security-test-on-handler: specifically targets API handlers. Generates tests for XSS, injection, auth boundaries. This is the kind of testing most teams skip until they get breached.
+  - unit-test-on-edit: saves you from the "I'll write tests later" trap. Every Python file save checks for tests and generates missing ones. Note: this hook no longer duplicates security test generation — that's handled exclusively by the security hook, saving credits on handler file saves.
+  - security-test-on-handler: specifically targets API handlers. Generates tests for XSS, injection, auth boundaries, parameterized query verification. This is the only hook that generates security tests.
   - qa-element-ids: frontend-specific. Adds data-testid attributes automatically so QA automation never gets blocked by missing selectors.
 - Emphasize: these run on every save. Not on PR, not on deploy — on save. Issues are caught at the earliest possible moment.
+- Credit optimization note: the hooks are designed to avoid overlap. Unit test hook handles functional tests, security hook handles security tests. No double-billing on handler saves.
 
 ## Slide 6: Steering Rules Deep Dive
 
-- 9 steering rules, 7 auto-included, 2 manual.
-- Auto means they're always active — you can't forget to apply them.
-- Manual means you opt in when the feature needs it (data uploads, offline sync). This keeps the context focused.
-- Highlight the breadth: from entity design to timezone handling to concurrency to QA automation. This covers the full stack.
+- 10 steering rules organized into three tiers for credit efficiency:
+  - Auto (3 rules): entity-standards, timezone-rules, testing-standards. These are foundational — every interaction needs them. ~250 lines of context.
+  - FileMatch (3 rules): query-safety-rules, qa-element-id-rules, storage-design-rules. These load only when you're editing relevant files — backend query code, frontend components, or data models. Zero cost when working on unrelated files.
+  - Manual (4 rules): concurrency-and-locking, report-generation, data-upload, offline-sync. Activated by referencing with # in chat when the feature needs them.
+- This tiered approach reduces average context from ~940 lines to ~250 lines per interaction — roughly 73% reduction in token usage.
 - Point out that these are version-controlled markdown files. The team can review and evolve them through PRs, just like code.
 
 ## Slide 7: Skills Deep Dive

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import './App.css'
 
 function LoginGate({ onAuth }) {
@@ -118,8 +118,8 @@ const slides = [
         icon: '🧭',
         title: 'Steering Rules',
         color: '#8b5cf6',
-        desc: 'Always-on or opt-in coding standards',
-        items: ['Entity standards', 'Timezone rules', 'Concurrency & locking', 'Storage design', 'Testing standards', 'Report generation', 'Data upload rules', 'Offline sync rules', 'QA element IDs'],
+        desc: 'Always-on, contextual, or opt-in coding standards',
+        items: ['Entity standards (auto)', 'Timezone rules (auto)', 'Testing standards (auto)', 'Query safety (contextual)', 'QA element IDs (contextual)', 'Storage design (contextual)', 'Concurrency & locking (manual)', 'Report generation (manual)', 'Data upload rules (manual)', 'Offline sync rules (manual)'],
       },
       {
         icon: '🧠',
@@ -138,7 +138,7 @@ const slides = [
       {
         name: 'unit-test-on-edit',
         trigger: 'Any .py file saved',
-        action: 'Checks for existing tests, generates missing ones with AAA pattern, 90% coverage target, required file headers',
+        action: 'Checks for existing tests, generates missing ones with AAA pattern, 90% coverage target, required file headers. Does NOT generate security tests — that is handled by the dedicated security hook to avoid duplicate work.',
       },
       {
         name: 'security-test-on-handler',
@@ -160,10 +160,11 @@ const slides = [
       { name: 'Entity Standards', mode: 'Auto', icon: '📋', desc: 'Audit fields, soft delete, input sanitization on every entity' },
       { name: 'Timezone Rules', mode: 'Auto', icon: '🕐', desc: 'Store UTC, send with offset, display local. Date-only fields need companion timezone' },
       { name: 'Testing Standards', mode: 'Auto', icon: '🧪', desc: 'AAA pattern, 90% coverage, security tests for handlers, regression tests for fixes' },
-      { name: 'Concurrency & Locking', mode: 'Auto', icon: '🔒', desc: 'Short transactions, lock ordering, optimistic concurrency with version columns' },
-      { name: 'Storage Design', mode: 'Auto', icon: '💾', desc: 'Schema design, indexing, encryption, backups, table naming (app_, map_, txn_)' },
-      { name: 'Report Generation', mode: 'Auto', icon: '📊', desc: 'Light vs heavy classification, read replicas, async generation, caching' },
-      { name: 'QA Element IDs', mode: 'Auto', icon: '🏷️', desc: 'data-testid on all interactive elements, kebab-case naming, dynamic IDs for loops' },
+      { name: 'Query Safety', mode: 'FileMatch', icon: '🛡️', desc: 'Parameterized queries mandatory, keyword blocklists banned. Loads on handler/service/repo files' },
+      { name: 'QA Element IDs', mode: 'FileMatch', icon: '🏷️', desc: 'data-testid on interactive elements, kebab-case naming. Loads on frontend files only' },
+      { name: 'Storage Design', mode: 'FileMatch', icon: '💾', desc: 'Schema design, indexing, encryption, backups, table naming. Loads on model/migration files' },
+      { name: 'Concurrency & Locking', mode: 'Manual', icon: '🔒', desc: 'Short transactions, lock ordering, optimistic concurrency. Activate with #concurrency-and-locking-rules' },
+      { name: 'Report Generation', mode: 'Manual', icon: '📊', desc: 'Light vs heavy classification, read replicas, async generation. Activate with #report-generation-rules' },
       { name: 'Data Upload', mode: 'Manual', icon: '📤', desc: 'Light/heavy classification, staging tables, collision handling, off-peak scheduling' },
       { name: 'Offline Sync', mode: 'Manual', icon: '📡', desc: 'Delta sync, local storage schema, conflict resolution, sync API design' },
     ],
