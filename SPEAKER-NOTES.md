@@ -28,11 +28,11 @@
 
 ## Slide 5: Hooks Deep Dive
 
-- Walk through each hook:
-  - unit-test-on-edit: saves you from the "I'll write tests later" trap. Every Python file save checks for tests and generates missing ones. Note: this hook no longer duplicates security test generation — that's handled exclusively by the security hook, saving credits on handler file saves.
-  - security-test-on-handler: specifically targets API handlers. Generates tests for XSS, injection, auth boundaries, parameterized query verification. This is the only hook that generates security tests.
-  - qa-element-ids: frontend-specific. Adds data-testid attributes automatically so QA automation never gets blocked by missing selectors.
-- Emphasize: these run on every save. Not on PR, not on deploy — on save. Issues are caught at the earliest possible moment.
+- Walk through each hook — all updated to v2 for credit efficiency:
+  - unit-test-on-edit v2: now scoped to 8 specific directories (handlers, services, models, repositories, utils, api, core, lib). No longer fires on test files, migrations, config, or __init__.py — roughly 50% fewer hook triggers. Prompt references the testing-standards steering file instead of repeating rules.
+  - security-test-on-handler v2: prompt shortened to reference testing-standards and query-safety-rules steering files. Same coverage, ~60% smaller prompt.
+  - qa-element-ids v2: prompt shortened from ~600 bytes to ~200 bytes by referencing the qa-element-id-rules steering file. 75% reduction.
+- Key design principle: hooks reference steering files instead of duplicating rules. This means updating a rule in one place updates both the steering guidance and the hook behavior.
 - Credit optimization note: the hooks are designed to avoid overlap. Unit test hook handles functional tests, security hook handles security tests. No double-billing on handler saves.
 
 ## Slide 6: Steering Rules Deep Dive
