@@ -929,14 +929,409 @@ function App() {
   )
 }
 
+const steeringGuide = [
+  {
+    name: 'Entity Standards',
+    file: 'entity-standards.md',
+    mode: 'Auto',
+    icon: '📋',
+    what: 'Enforces audit fields (id, created_date, modified_date, created_by, modified_by, deleted_at), soft delete, and input sanitization on every entity.',
+    when: 'Always needed. Every data model must have audit fields and sanitization. This is foundational — never turn it off.',
+    whenNot: 'No scenario where this should be deactivated.',
+    activate: 'Active by default. No action needed.',
+    deactivate: 'Not recommended. If you must: change front matter to inclusion: manual.',
+  },
+  {
+    name: 'Timezone Rules',
+    file: 'timezone-rules.md',
+    mode: 'Auto',
+    icon: '🕐',
+    what: 'Enforces UTC storage, offset-aware API contracts, TIMESTAMPTZ columns, and companion timezone columns for date-only fields.',
+    when: 'Always needed. Any application that stores or displays dates/times needs this. Timezone bugs are subtle and expensive.',
+    whenNot: 'No scenario where this should be deactivated.',
+    activate: 'Active by default. No action needed.',
+    deactivate: 'Not recommended. If you must: change front matter to inclusion: manual.',
+  },
+  {
+    name: 'Testing Standards',
+    file: 'testing-standards.md',
+    mode: 'Auto',
+    icon: '🧪',
+    what: 'Enforces AAA test pattern, 90% coverage target, required test file headers, security tests for handlers, regression tests for bug fixes.',
+    when: 'Always needed. Every function must have tests. This ensures Kiro never generates code without accompanying tests.',
+    whenNot: 'No scenario where this should be deactivated.',
+    activate: 'Active by default. No action needed.',
+    deactivate: 'Not recommended. If you must: change front matter to inclusion: manual.',
+  },
+  {
+    name: 'Query Safety',
+    file: 'query-safety-rules.md',
+    mode: 'FileMatch',
+    icon: '🛡️',
+    what: 'Mandates parameterized queries, bans keyword blocklists, enforces allowlist validation for dynamic columns. Prevents SQL injection and false-positive data rejection.',
+    when: 'When editing backend code that builds or executes database queries — handlers, services, repositories, API routes.',
+    whenNot: 'When working on frontend components, CSS, documentation, or infrastructure code that doesn\'t touch databases.',
+    activate: 'Loads automatically when you open/edit files matching: **/handlers/**, **/repositories/**, **/services/**, **/db/**, **/api/**',
+    deactivate: 'No action needed — it only loads when relevant files are in context.',
+  },
+  {
+    name: 'QA Element IDs',
+    file: 'qa-element-id-rules.md',
+    mode: 'FileMatch',
+    icon: '🏷️',
+    what: 'Ensures data-testid attributes on all interactive UI elements with consistent kebab-case naming convention.',
+    when: 'When editing frontend component files — React, Vue, Svelte, or HTML.',
+    whenNot: 'When working on backend Python code, database migrations, infrastructure, or documentation.',
+    activate: 'Loads automatically when you open/edit files matching: **/*.tsx, **/*.jsx, **/*.vue, **/*.svelte, **/*.html',
+    deactivate: 'No action needed — it only loads when relevant files are in context.',
+  },
+  {
+    name: 'Storage Design',
+    file: 'storage-design-rules.md',
+    mode: 'FileMatch',
+    icon: '💾',
+    what: 'Enforces schema design, indexing strategy, encryption, backups, table naming (app_, map_, txn_), and Well-Architected alignment for all storage.',
+    when: 'When creating or modifying data models, database schemas, migrations, or storage configurations.',
+    whenNot: 'When working on frontend components, API handlers (without schema changes), or documentation.',
+    activate: 'Loads automatically when you open/edit files matching: **/models/**, **/migrations/**, **/schema/**, **/db/**, **/repositories/**',
+    deactivate: 'No action needed — it only loads when relevant files are in context.',
+  },
+  {
+    name: 'Concurrency & Locking',
+    file: 'concurrency-and-locking-rules.md',
+    mode: 'Manual',
+    icon: '🔒',
+    what: 'Enforces short transactions, consistent lock ordering, row-level locks, optimistic concurrency with version columns, connection pooling, and DynamoDB conditional writes.',
+    when: 'When writing code that performs concurrent database writes — order processing, inventory updates, queue consumers, batch operations, or any multi-user write scenario.',
+    whenNot: 'When building read-only features, frontend components, simple CRUD without concurrency concerns, or documentation.',
+    activate: 'Type #concurrency-and-locking-rules in the Kiro chat to activate for the current session.',
+    deactivate: 'It deactivates automatically when the session ends. No action needed.',
+  },
+  {
+    name: 'Report Generation',
+    file: 'report-generation-rules.md',
+    mode: 'Manual',
+    icon: '📊',
+    what: 'Enforces light vs heavy report classification, read replicas for heavy reports, async generation, streaming exports, caching strategies, and query optimization.',
+    when: 'When building reports, dashboards, data exports (CSV/Excel/PDF), or any read-heavy aggregation feature.',
+    whenNot: 'When building CRUD features, authentication, file uploads, or any feature that doesn\'t involve data aggregation or export.',
+    activate: 'Type #report-generation-rules in the Kiro chat to activate for the current session.',
+    deactivate: 'It deactivates automatically when the session ends. No action needed.',
+  },
+  {
+    name: 'Data Upload',
+    file: 'data-upload-rules.md',
+    mode: 'Manual',
+    icon: '📤',
+    what: 'Enforces light/heavy upload classification, row validation, staging tables, duplicate/collision handling, off-peak scheduling, and file security.',
+    when: 'When building features that accept user-uploaded files (Excel, CSV) for import into the system.',
+    whenNot: 'When building features that don\'t involve file-based data import — API-only data entry, frontend components, reports.',
+    activate: 'Type #data-upload-rules in the Kiro chat to activate for the current session.',
+    deactivate: 'It deactivates automatically when the session ends. No action needed.',
+  },
+  {
+    name: 'Offline Sync',
+    file: 'offline-sync-rules.md',
+    mode: 'Manual',
+    icon: '📡',
+    what: 'Enforces delta sync protocol, local storage schema, conflict resolution strategies, sync API design, and network awareness.',
+    when: 'When building client applications that must work without network connectivity and sync data when reconnected.',
+    whenNot: 'When building server-only features, always-online web apps, or backend services that don\'t have offline requirements.',
+    activate: 'Type #offline-sync-rules in the Kiro chat to activate for the current session.',
+    deactivate: 'It deactivates automatically when the session ends. No action needed.',
+  },
+]
+
+const skillsGuide = [
+  {
+    name: 'Compute Selection',
+    folder: 'compute-selection',
+    icon: '⚙️',
+    what: 'Guided 7-question decision flow for choosing between Lambda/serverless and containers/ECS/Fargate, with cost estimates.',
+    when: 'When you need to decide on a compute platform for a new workload — API, background worker, scheduled job, event processor, or long-running service.',
+    whenNot: 'When the compute platform is already decided and you\'re just implementing. Or when modifying existing infrastructure without changing the compute model.',
+    activate: 'Mention any of these keywords in chat: Lambda, ECS, container, Docker, microservice, worker, background processing, scheduled task, batch job. The skill activates automatically.',
+    deactivate: 'Skills only activate on keyword triggers — they don\'t consume credits when not triggered. No deactivation needed.',
+  },
+  {
+    name: 'Storage Selection',
+    folder: 'storage-selection',
+    icon: '💾',
+    what: 'Guided 9-question, 3-phase decision flow: data model (NoSQL vs SQL) → engine (PostgreSQL vs MySQL) → deployment (serverless vs serverful).',
+    when: 'When choosing a database for a new feature or service. When evaluating whether to use DynamoDB, PostgreSQL, MySQL, or another storage option.',
+    whenNot: 'When the database is already chosen and you\'re writing queries or models for it. Or when working on frontend code.',
+    activate: 'Mention any of these keywords in chat: database, storage, DynamoDB, RDS, PostgreSQL, MySQL, which database, data layer. The skill activates automatically.',
+    deactivate: 'Skills only activate on keyword triggers — they don\'t consume credits when not triggered. No deactivation needed.',
+  },
+  {
+    name: 'Tenant Strategy',
+    folder: 'tenant-strategy',
+    icon: '🏢',
+    what: 'Guided 5-question decision flow for choosing multi-tenancy isolation model: row-level → schema-per-tenant → database-per-tenant → stack-per-tenant.',
+    when: 'When designing a SaaS application that serves multiple customers/organizations. When deciding how to isolate tenant data.',
+    whenNot: 'When building a single-tenant application. When the tenancy model is already decided and you\'re implementing within it.',
+    activate: 'Mention any of these keywords in chat: multi-tenant, tenancy, SaaS, tenant isolation, per-customer, white-label, multiple organizations. The skill activates automatically.',
+    deactivate: 'Skills only activate on keyword triggers — they don\'t consume credits when not triggered. No deactivation needed.',
+  },
+]
+
+const hooksGuide = [
+  {
+    name: 'Unit Test on Edit',
+    file: 'unit-test-on-edit.kiro.hook',
+    icon: '🧪',
+    trigger: 'Any .py file saved',
+    what: 'Checks if unit tests exist for the saved file. If missing or incomplete, generates them following testing-standards (AAA pattern, 90% coverage, file headers).',
+    when: 'Always useful during active development. Ensures no code ships without tests.',
+    whenNot: 'If you\'re doing a bulk refactor touching many files and want to generate tests afterward in one pass instead of per-save. Temporarily disable by setting "enabled": false in the hook file.',
+    activate: 'Enabled by default. If previously disabled, set "enabled": true in the hook file.',
+    deactivate: 'Set "enabled": false in .kiro/hooks/unit-test-on-edit.kiro.hook. Re-enable when done.',
+  },
+  {
+    name: 'Security Test on Handler',
+    file: 'security-test-on-handler.kiro.hook',
+    icon: '🔐',
+    trigger: 'Handler file saved (**/handlers/**/*.py)',
+    what: 'Generates security tests covering XSS, injection, auth boundaries (401/403), oversized input, data exposure, and parameterized query verification.',
+    when: 'Always useful when developing API handlers that process user input. This is your first line of defense against OWASP A01 and A03.',
+    whenNot: 'If you\'re editing handler files for non-functional changes (comments, formatting) and don\'t want to trigger test generation. Temporarily disable.',
+    activate: 'Enabled by default. If previously disabled, set "enabled": true in the hook file.',
+    deactivate: 'Set "enabled": false in .kiro/hooks/security-test-on-handler.kiro.hook. Re-enable when done.',
+  },
+  {
+    name: 'QA Element IDs',
+    file: 'qa-element-ids.kiro.hook',
+    icon: '🏷️',
+    trigger: 'Frontend file saved (.tsx, .jsx, .vue, .svelte, .html)',
+    what: 'Scans for interactive UI elements missing data-testid and adds them with consistent naming convention.',
+    when: 'Always useful during frontend development. Ensures QA automation is never blocked by missing selectors.',
+    whenNot: 'If you\'re doing a large frontend refactor and want to add testids in a single pass afterward. Temporarily disable.',
+    activate: 'Enabled by default. If previously disabled, set "enabled": true in the hook file.',
+    deactivate: 'Set "enabled": false in .kiro/hooks/qa-element-ids.kiro.hook. Re-enable when done.',
+  },
+]
+
+const installSteps = [
+  {
+    step: 1,
+    title: 'Download Kiro',
+    icon: '📥',
+    content: 'Go to kiro.dev and download the installer for your operating system.',
+    details: [
+      'macOS: Intel and Apple silicon supported',
+      'Windows: Windows 10 and 11 (64-bit only)',
+      'Linux: glibc 2.39+ (Ubuntu 24+, Debian 13+, Fedora 40+, Arch, Mint 22+)',
+    ],
+    link: 'https://kiro.dev/downloads/',
+  },
+  {
+    step: 2,
+    title: 'Install & Launch',
+    icon: '🚀',
+    content: 'Open the downloaded file and follow the OS-specific installation instructions. Then open Kiro IDE.',
+    details: [
+      'macOS: drag to Applications folder',
+      'Windows: run the .exe installer',
+      'Linux: install the .deb or .rpm package',
+    ],
+  },
+  {
+    step: 3,
+    title: 'Sign In',
+    icon: '🔑',
+    content: 'On first launch, sign in with your preferred provider — social login or AWS account.',
+    details: [
+      'Google, GitHub, or AWS Builder ID supported',
+      'Enterprise teams can use AWS IAM Identity Center',
+    ],
+  },
+  {
+    step: 4,
+    title: 'Import VS Code Settings (Optional)',
+    icon: '⚙️',
+    content: 'Kiro offers to import your VS Code settings, extensions, and keybindings. Skip if you prefer a fresh start.',
+    details: [
+      'Themes, extensions, and settings transfer automatically',
+      'Kiro is VS Code-compatible — most extensions work out of the box',
+    ],
+  },
+  {
+    step: 5,
+    title: 'Clone the Configuration Kit',
+    icon: '📦',
+    content: 'Clone or copy the .kiro directory from the kit repository into your project root.',
+    details: [
+      'git clone <kit-repo-url> temp-kit && cp -r temp-kit/.kiro .kiro && rm -rf temp-kit',
+      'Or copy from a local path: cp -r /path/to/kit/.kiro .kiro',
+      'The .kiro directory contains hooks/, steering/, and skills/',
+    ],
+  },
+  {
+    step: 6,
+    title: 'Open Your Project',
+    icon: '📂',
+    content: 'Open your project folder in Kiro. Auto-inclusion steering rules activate immediately. Hooks start firing on file saves.',
+    details: [
+      'Entity standards, timezone rules, and testing standards load automatically',
+      'FileMatch rules load when you open matching files',
+      'Manual rules are available via # reference in chat',
+      'Skills activate when you mention relevant keywords',
+    ],
+  },
+  {
+    step: 7,
+    title: 'Verify Setup',
+    icon: '✅',
+    content: 'Test that everything works by saving a Python file — the unit-test hook should trigger. Save a handler file — the security-test hook should trigger.',
+    details: [
+      'Check the Kiro agent panel for hook activity',
+      'Try mentioning "database" in chat — the storage-selection skill should activate',
+      'Type #concurrency-and-locking-rules to verify manual steering activation',
+    ],
+  },
+]
+
+function ActivationGuide() {
+  const [openSteering, setOpenSteering] = useState(null)
+  const [openSkill, setOpenSkill] = useState(null)
+  const [openHook, setOpenHook] = useState(null)
+
+  return (
+    <div className="guide-page">
+      <div className="guide-content">
+        <h1 className="guide-title">Activation Guide</h1>
+        <p className="guide-subtitle">How to install Kiro, set up the kit, and manage steering rules, skills, and hooks.</p>
+
+        <section className="guide-section" data-testid="activation-guide-install-section">
+          <h2>Installation & Setup</h2>
+          <p className="guide-section-desc">Get Kiro running and the configuration kit loaded in 7 steps. Source: <a href="https://kiro.dev/docs/getting-started/installation" target="_blank" rel="noopener noreferrer" className="guide-link" data-testid="activation-guide-install-docs-link">kiro.dev/docs</a></p>
+          <div className="install-steps">
+            {installSteps.map((s) => (
+              <div key={s.step} className="install-step" data-testid={`activation-guide-install-step-${s.step}`}>
+                <div className="install-step-num">{s.step}</div>
+                <div className="install-step-body">
+                  <div className="install-step-title">{s.icon} {s.title}</div>
+                  <p className="install-step-content">{s.content}</p>
+                  <ul className="install-step-details">
+                    {s.details.map((d, j) => (
+                      <li key={j}>{d}</li>
+                    ))}
+                  </ul>
+                  {s.link && <a href={s.link} target="_blank" rel="noopener noreferrer" className="install-step-link" data-testid={`activation-guide-install-step-${s.step}-link`}>Download →</a>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="guide-section" data-testid="activation-guide-steering-section">
+          <h2>Steering Rules</h2>
+          <p className="guide-section-desc">Steering rules guide Kiro's code generation. They come in three tiers based on how they load into context.</p>
+          <div className="guide-legend">
+            <span className="steering-mode auto">Auto</span> Always active — loaded every interaction
+            <span className="steering-mode filematch">FileMatch</span> Contextual — loaded only when editing matching files
+            <span className="steering-mode manual">Manual</span> Opt-in — activated by typing # + rule name in chat
+          </div>
+          <div className="guide-list">
+            {steeringGuide.map((item, i) => (
+              <div key={i} className={`guide-item ${openSteering === i ? 'open' : ''}`} onClick={() => setOpenSteering(openSteering === i ? null : i)} data-testid={`activation-guide-steering-item-${item.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`}>
+                <div className="guide-item-header">
+                  <span className="guide-item-icon">{item.icon}</span>
+                  <span className="guide-item-name">{item.name}</span>
+                  <span className={`steering-mode ${item.mode.toLowerCase()}`}>{item.mode}</span>
+                  <span className="guide-item-toggle">{openSteering === i ? '▲' : '▼'}</span>
+                </div>
+                <p className="guide-item-what">{item.what}</p>
+                {openSteering === i && (
+                  <div className="guide-item-details">
+                    <div className="guide-detail"><span className="guide-label">File:</span> .kiro/steering/{item.file}</div>
+                    <div className="guide-detail guide-when"><span className="guide-label">When to use:</span> {item.when}</div>
+                    <div className="guide-detail guide-when-not"><span className="guide-label">When NOT to use:</span> {item.whenNot}</div>
+                    <div className="guide-detail guide-activate"><span className="guide-label">How to activate:</span> {item.activate}</div>
+                    <div className="guide-detail guide-deactivate"><span className="guide-label">How to deactivate:</span> {item.deactivate}</div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="guide-section" data-testid="activation-guide-skills-section">
+          <h2>Skills</h2>
+          <p className="guide-section-desc">Skills are interactive decision flows that activate on keyword triggers. They don't consume credits until triggered.</p>
+          <div className="guide-list">
+            {skillsGuide.map((item, i) => (
+              <div key={i} className={`guide-item ${openSkill === i ? 'open' : ''}`} onClick={() => setOpenSkill(openSkill === i ? null : i)} data-testid={`activation-guide-skill-item-${item.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`}>
+                <div className="guide-item-header">
+                  <span className="guide-item-icon">{item.icon}</span>
+                  <span className="guide-item-name">{item.name}</span>
+                  <span className="steering-mode auto">Keyword</span>
+                  <span className="guide-item-toggle">{openSkill === i ? '▲' : '▼'}</span>
+                </div>
+                <p className="guide-item-what">{item.what}</p>
+                {openSkill === i && (
+                  <div className="guide-item-details">
+                    <div className="guide-detail"><span className="guide-label">Folder:</span> .kiro/skills/{item.folder}/SKILL.md</div>
+                    <div className="guide-detail guide-when"><span className="guide-label">When to use:</span> {item.when}</div>
+                    <div className="guide-detail guide-when-not"><span className="guide-label">When NOT to use:</span> {item.whenNot}</div>
+                    <div className="guide-detail guide-activate"><span className="guide-label">How to activate:</span> {item.activate}</div>
+                    <div className="guide-detail guide-deactivate"><span className="guide-label">How to deactivate:</span> {item.deactivate}</div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="guide-section" data-testid="activation-guide-hooks-section">
+          <h2>Hooks</h2>
+          <p className="guide-section-desc">Hooks fire automatically on file events. They trigger agent interactions that consume credits on every matching file save.</p>
+          <div className="guide-list">
+            {hooksGuide.map((item, i) => (
+              <div key={i} className={`guide-item ${openHook === i ? 'open' : ''}`} onClick={() => setOpenHook(openHook === i ? null : i)} data-testid={`activation-guide-hook-item-${item.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`}>
+                <div className="guide-item-header">
+                  <span className="guide-item-icon">{item.icon}</span>
+                  <span className="guide-item-name">{item.name}</span>
+                  <span className="steering-mode manual">On Save</span>
+                  <span className="guide-item-toggle">{openHook === i ? '▲' : '▼'}</span>
+                </div>
+                <p className="guide-item-what">{item.what}</p>
+                {openHook === i && (
+                  <div className="guide-item-details">
+                    <div className="guide-detail"><span className="guide-label">File:</span> .kiro/hooks/{item.file}</div>
+                    <div className="guide-detail"><span className="guide-label">Trigger:</span> {item.trigger}</div>
+                    <div className="guide-detail guide-when"><span className="guide-label">When to use:</span> {item.when}</div>
+                    <div className="guide-detail guide-when-not"><span className="guide-label">When NOT to use:</span> {item.whenNot}</div>
+                    <div className="guide-detail guide-activate"><span className="guide-label">How to activate:</span> {item.activate}</div>
+                    <div className="guide-detail guide-deactivate"><span className="guide-label">How to deactivate:</span> {item.deactivate}</div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+    </div>
+  )
+}
+
 function AuthenticatedApp() {
   const [authed, setAuthed] = useState(() => sessionStorage.getItem('authenticated') === 'true')
+  const [page, setPage] = useState('presentation')
 
   if (!authed) {
     return <LoginGate onAuth={() => setAuthed(true)} />
   }
 
-  return <App />
+  return (
+    <>
+      <nav className="top-nav" data-testid="authenticated-app-top-nav">
+        <button className={page === 'presentation' ? 'nav-active' : ''} onClick={() => setPage('presentation')} data-testid="authenticated-app-nav-training-button">📊 Training</button>
+        <button className={page === 'guide' ? 'nav-active' : ''} onClick={() => setPage('guide')} data-testid="authenticated-app-nav-guide-button">📖 Activation Guide</button>
+      </nav>
+      {page === 'presentation' ? <App /> : <ActivationGuide />}
+    </>
+  )
 }
 
 export default AuthenticatedApp
