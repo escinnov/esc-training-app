@@ -456,6 +456,48 @@ const slides = [
     ],
   },
   {
+    id: 'usage-guide',
+    type: 'usage-guide',
+    title: 'Using Kiro Efficiently',
+    sections: [
+      {
+        icon: '🚫',
+        title: 'Skip "Generate Steering Docs"',
+        desc: 'The kit already has curated steering files. The button creates generic files that can conflict.',
+        action: 'Use this safe prompt in chat instead:',
+        prompt: 'Create product.md, tech-stack.md, and project-structure.md in .kiro/steering/ (inclusion: auto). Describe the project only — do NOT include coding standards, testing rules, or conventions. Those are in existing steering files.',
+      },
+      {
+        icon: '💬',
+        title: 'Chat Effectively',
+        desc: 'Be specific. The kit handles standards automatically — just describe what you want built.',
+        action: 'Reference files with # for context. Activate manual steering with #rule-name when needed.',
+        prompt: '#concurrency-and-locking-rules — for concurrent DB code\n#report-generation-rules — for reports/exports\n#data-upload-rules — for file imports\n#offline-sync-rules — for offline features',
+      },
+      {
+        icon: '💾',
+        title: 'Save Files — Hooks Fire',
+        desc: 'Every save triggers relevant hooks: unit tests for .py, security tests for handlers, data-testid for frontend.',
+        action: 'For bulk refactors: disable hooks temporarily (set "enabled": false), refactor, re-enable, save.',
+        prompt: null,
+      },
+      {
+        icon: '📋',
+        title: 'Use Specs for Big Features',
+        desc: 'Click Spec button → describe feature → Kiro creates requirements, design, and tasks.',
+        action: 'Use Specs for multi-file features. Use Chat for quick fixes and single-file changes.',
+        prompt: null,
+      },
+      {
+        icon: '💡',
+        title: 'Credit Efficiency',
+        desc: 'Use Autopilot for routine tasks, Supervised for critical code. Be specific to avoid round trips.',
+        action: 'Only activate manual steering you need. Batch saves during refactors. Specs are cheaper than many chat messages.',
+        prompt: null,
+      },
+    ],
+  },
+  {
     id: 'summary',
     type: 'summary',
     title: 'Key Takeaways',
@@ -763,6 +805,29 @@ function SlideAdoption({ slide }) {
   )
 }
 
+function SlideUsageGuide({ slide }) {
+  return (
+    <div className="slide slide-usage-guide" data-testid="slide-usage-guide">
+      <h2>{slide.title}</h2>
+      <div className="usage-sections" data-testid="usage-guide-sections">
+        {slide.sections.map((s, i) => (
+          <div key={i} className="usage-card" data-testid={`usage-guide-card-${s.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`}>
+            <div className="usage-card-header">
+              <span className="usage-card-icon">{s.icon}</span>
+              <div>
+                <div className="usage-card-title">{s.title}</div>
+                <div className="usage-card-desc">{s.desc}</div>
+              </div>
+            </div>
+            <div className="usage-card-action">{s.action}</div>
+            {s.prompt && <pre className="usage-card-prompt" data-testid={`usage-guide-prompt-${s.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`}>{s.prompt}</pre>}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function SlideSummary({ slide }) {
   return (
     <div className="slide slide-summary" data-testid="slide-summary">
@@ -794,6 +859,7 @@ function renderSlide(slide) {
     case 'owasp-risks': return <SlideOwaspRisks slide={slide} />
     case 'flow': return <SlideFlow slide={slide} />
     case 'adoption': return <SlideAdoption slide={slide} />
+    case 'usage-guide': return <SlideUsageGuide slide={slide} />
     case 'summary': return <SlideSummary slide={slide} />
     default: return <div className="slide"><h2>{slide.title}</h2></div>
   }
@@ -894,11 +960,16 @@ function App() {
   if (printMode) {
     return (
       <div className="print-view" data-testid="app-print-view">
+        <div className="print-section-header">Training Slides</div>
         {slides.map((slide, i) => (
           <div key={i} className="print-slide" data-testid={`app-print-slide-${slide.id}`}>
             {renderSlidePrint(slide)}
           </div>
         ))}
+        <div className="print-section-header">Activation Guide</div>
+        <div className="print-slide print-guide">
+          <ActivationGuide />
+        </div>
       </div>
     )
   }

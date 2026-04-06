@@ -113,7 +113,19 @@
 - Suggested priority for existing projects: entities → timezones → tests → concurrency → storage.
 - The "boy scout rule" effect: hooks ensure every file you edit gets tests and standards applied, even if you don't explicitly audit it.
 
-## Slide 15: Key Takeaways
+## Slide 15: Using Kiro Efficiently
+
+- This is the practical "how to use it day-to-day" slide.
+- Walk through the five cards:
+  1. Skip "Generate Steering Docs" — the kit already has curated rules. Use the safe prompt shown on the slide to generate project-context files without conflicts.
+  2. Chat effectively — be specific, reference files with #, activate manual steering only when needed.
+  3. Save files — hooks fire automatically. Tip: disable during bulk refactors, re-enable after.
+  4. Use Specs for big features — multi-file features get requirements, design, and tasks. Chat is for quick fixes.
+  5. Credit efficiency — Autopilot for routine, Supervised for critical. Specific prompts = fewer round trips.
+- Key message: the kit does the heavy lifting. Your job is to describe what you want built, and the standards are enforced automatically.
+- Point people to the Activation Guide page (second tab) for the full reference on each rule.
+
+## Slide 16: Key Takeaways
 
 - Six takeaways to remember:
   1. Automation over discipline — hooks do what humans forget.
@@ -123,7 +135,7 @@
   5. 10 SDLC issues prevented — by tooling, not process.
   6. Incremental adoption — works for new and existing projects.
 
-## Slide 16: Questions
+## Slide 17: Questions
 
 - Open the floor for questions.
 - Common questions to prepare for:

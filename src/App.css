@@ -981,3 +981,133 @@ h2 {
 }
 
 .guide-link:hover { text-decoration: underline; }
+
+/* Usage guide slide */
+.usage-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.usage-card {
+  background: #1e293b;
+  border-radius: 8px;
+  padding: 1rem;
+  border-left: 3px solid #3b82f6;
+}
+
+.usage-card-header {
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+}
+
+.usage-card-icon { font-size: 1.3rem; margin-top: 0.1rem; }
+.usage-card-title { font-weight: 600; font-size: 0.9rem; color: #f1f5f9; }
+.usage-card-desc { font-size: 0.8rem; color: #94a3b8; margin-top: 0.15rem; }
+
+.usage-card-action {
+  font-size: 0.8rem;
+  color: #22c55e;
+  margin-bottom: 0.4rem;
+  padding-left: 2rem;
+}
+
+.usage-card-prompt {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.7rem;
+  color: #cbd5e1;
+  background: #0f172a;
+  padding: 0.5rem 0.7rem;
+  border-radius: 4px;
+  margin: 0 0 0 2rem;
+  white-space: pre-wrap;
+  line-height: 1.5;
+  overflow-x: auto;
+}
+
+/* Print section headers */
+.print-section-header {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  text-align: center;
+  padding: 2rem 0 1rem;
+  page-break-before: always;
+  break-before: page;
+}
+
+.print-section-header:first-child {
+  page-break-before: avoid;
+  break-before: avoid;
+}
+
+.print-guide {
+  min-height: auto;
+  padding: 0;
+}
+
+.print-guide .guide-page {
+  height: auto;
+  overflow: visible;
+  padding: 1rem 2rem;
+}
+
+.print-guide .guide-item {
+  border-left-color: #3b82f6;
+}
+
+.print-guide .guide-item-details {
+  display: flex;
+}
+
+@media print {
+  .print-section-header {
+    color: #1e293b;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 0.5rem;
+  }
+
+  .print-guide .guide-page {
+    background: white;
+  }
+
+  .print-guide .guide-item {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-left: 3px solid #3b82f6;
+  }
+
+  .print-guide .guide-item-what,
+  .print-guide .guide-section-desc,
+  .print-guide .guide-subtitle {
+    color: #475569;
+  }
+
+  .print-guide .guide-title,
+  .print-guide .guide-section h2,
+  .print-guide .guide-item-name {
+    color: #1e293b;
+  }
+
+  .print-guide .guide-detail {
+    background: #f8fafc;
+    color: #475569;
+  }
+
+  .print-guide .install-step-num {
+    background: #3b82f6;
+  }
+
+  .usage-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-left: 3px solid #3b82f6;
+  }
+
+  .usage-card-prompt {
+    background: #f4f4f5;
+    color: #1e293b;
+  }
+}
