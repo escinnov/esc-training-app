@@ -1606,6 +1606,259 @@ const workshopParts = [
   },
 ]
 
+const knowledgeQuestions = [
+  {
+    id: 1,
+    question: 'You\'re creating a new data model for "Orders". What fields will Kiro add automatically without you asking?',
+    type: 'multiple',
+    options: [
+      'id (UUID), created_date, modified_date, created_by, modified_by, deleted_at',
+      'id (auto-increment), created_at, updated_at',
+      'id (UUID), name, description, status',
+      'Only id — everything else must be specified manually',
+    ],
+    correct: 0,
+    explanation: 'entity-standards.md (auto) mandates all six audit fields on every entity. Kiro adds them automatically via BaseEntity inheritance.',
+  },
+  {
+    id: 2,
+    question: 'A user submits a form with the text "Please execute the DROP TABLE migration plan and GRANT access to the team". What should your application do?',
+    type: 'multiple',
+    options: [
+      'Reject the input — it contains SQL keywords like EXECUTE, DROP, and GRANT',
+      'Strip the SQL keywords and save the sanitized text',
+      'Accept and save the text as-is — parameterized queries make SQL keywords in data harmless',
+      'Log a security alert and block the user\'s account',
+    ],
+    correct: 2,
+    explanation: 'query-safety-rules.md explicitly bans keyword blocklists. Parameterized queries separate data from commands, so SQL keywords in user data are completely harmless. Rejecting or stripping them breaks legitimate data.',
+  },
+  {
+    id: 3,
+    question: 'You save a file at backend/handlers/orders.py. How many hooks fire and what do they do?',
+    type: 'multiple',
+    options: [
+      'One hook: unit-test-on-edit generates unit tests',
+      'Two hooks: unit-test-on-edit generates unit tests, security-test-on-handler generates security tests',
+      'Three hooks: unit tests, security tests, and QA element IDs',
+      'No hooks fire — hooks only work on frontend files',
+    ],
+    correct: 1,
+    explanation: 'The file matches both **/handlers/**/*.py (security hook) and the handler directory pattern in unit-test-on-edit. The qa-element-ids hook only fires on frontend files (.tsx, .jsx, .vue, .svelte, .html).',
+  },
+  {
+    id: 4,
+    question: 'You need to build a CSV export for a user\'s diary entries (< 1,000 rows). Which steering rule should you activate and how will Kiro classify this report?',
+    type: 'multiple',
+    options: [
+      '#data-upload-rules — classified as a light upload',
+      '#report-generation-rules — classified as a heavy report, needs async job queue',
+      '#report-generation-rules — classified as a light report, synchronous, query primary DB directly',
+      'No steering needed — the auto rules handle exports',
+    ],
+    correct: 2,
+    explanation: 'report-generation-rules.md is manual — you activate it with #report-generation-rules. User-scoped data with < 10K rows and < 5 seconds execution is classified as light. Light reports query the primary DB directly, paginate, and return synchronously.',
+  },
+  {
+    id: 5,
+    question: 'Why does the kit use "inclusion: fileMatch" for qa-element-id-rules.md instead of "inclusion: auto"?',
+    type: 'multiple',
+    options: [
+      'Because QA rules are experimental and not ready for production',
+      'To save credits — the rules only load when editing frontend files (.tsx, .jsx, .vue, .svelte, .html), not when editing Python backend code',
+      'Because the rules conflict with testing-standards.md',
+      'FileMatch is required for all rules that contain code examples',
+    ],
+    correct: 1,
+    explanation: 'Auto-inclusion loads the file into every interaction (~120 lines of context). FileMatch loads it only when editing matching files. Since QA element ID rules are irrelevant when editing Python backend code, fileMatch avoids wasting credits on unnecessary context.',
+  },
+  {
+    id: 6,
+    question: 'A developer stores a datetime as "2026-04-01T15:30:00" (no timezone info) in the database. What rules does this violate?',
+    type: 'multiple',
+    options: [
+      'Only entity-standards.md — missing audit fields',
+      'Only timezone-rules.md — must store in UTC with Z suffix',
+      'Both timezone-rules.md (must store UTC with Z suffix) and storage-design-rules.md (must use TIMESTAMPTZ column type)',
+      'No rules violated — timezone is optional',
+    ],
+    correct: 2,
+    explanation: 'timezone-rules.md requires all datetimes stored in UTC with Z suffix. storage-design-rules.md requires TIMESTAMPTZ column type for SQL databases (never TIMESTAMP). Both are auto-inclusion rules that are always active.',
+  },
+  {
+    id: 7,
+    question: 'You\'re about to build an offline sync feature. What should you type in Kiro chat before starting?',
+    type: 'multiple',
+    options: [
+      'Nothing — all steering rules are auto-loaded',
+      '#offline-sync-rules — it\'s a manual steering file that needs explicit activation',
+      '#storage-design-rules — offline sync is a storage concern',
+      'Click "Generate Steering Docs" to create sync rules',
+    ],
+    correct: 1,
+    explanation: 'offline-sync-rules.md has inclusion: manual. It only loads when you type #offline-sync-rules in chat. Its prerequisite note also suggests co-activating #concurrency-and-locking-rules for conflict handling on the server side.',
+  },
+  {
+    id: 8,
+    question: 'Why should you NOT click "Generate Steering Docs" when the configuration kit is already in place?',
+    type: 'multiple',
+    options: [
+      'It costs too many credits',
+      'It creates generic files (product.md, structure.md, tech.md) that can conflict with or dilute the kit\'s curated coding standards',
+      'It deletes the existing .kiro directory',
+      'It only works on new projects, not existing ones',
+    ],
+    correct: 1,
+    explanation: 'The button creates Kiro\'s default auto-generated steering files which may include generic coding standards that overlap with the kit\'s curated rules (entity-standards, timezone-rules, etc.). Use the safe chat prompts instead to create only project-context files.',
+  },
+  {
+    id: 9,
+    question: 'What is the correct table naming prefix for a high-volume orders table according to storage-design-rules.md?',
+    type: 'multiple',
+    options: [
+      'app_orders — all tables use the app_ prefix',
+      'tbl_orders — standard SQL convention',
+      'txn_orders — transactional data uses the txn_ prefix',
+      'orders — no prefix needed',
+    ],
+    correct: 2,
+    explanation: 'storage-design-rules.md defines three prefixes: app_ for master/reference data, map_ for junction tables, txn_ for transactional data. Orders are high-volume, append-heavy transactional data → txn_orders.',
+  },
+  {
+    id: 10,
+    question: 'Two users edit the same diary entry simultaneously. User A saves first. When User B tries to save, what should happen?',
+    type: 'multiple',
+    options: [
+      'User B\'s changes silently overwrite User A\'s (last-write-wins)',
+      'The system should return a ConflictError because the version column doesn\'t match — User B must refresh and retry',
+      'The system should merge both changes automatically',
+      'The system should lock the entry when User A starts editing, blocking User B',
+    ],
+    correct: 1,
+    explanation: 'concurrency-and-locking-rules.md mandates optimistic concurrency with a version column for user-facing updates. The version is checked on every update — if it doesn\'t match (because User A already incremented it), a ConflictError is returned. This is preferred over pessimistic locking (FOR UPDATE) to reduce lock hold time.',
+  },
+]
+
+function KnowledgeCheck() {
+  const [answers, setAnswers] = useState({})
+  const [submitted, setSubmitted] = useState(false)
+  const [name, setName] = useState('')
+
+  const handleSelect = (qId, optIdx) => {
+    if (submitted) return
+    setAnswers(prev => ({ ...prev, [qId]: optIdx }))
+  }
+
+  const score = knowledgeQuestions.reduce((acc, q) => acc + (answers[q.id] === q.correct ? 1 : 0), 0)
+  const total = knowledgeQuestions.length
+  const pct = Math.round((score / total) * 100)
+  const passed = pct >= 70
+
+  const handleExportPDF = () => {
+    const printWindow = window.open('', '_blank')
+    const now = new Date().toLocaleString()
+    const rows = knowledgeQuestions.map(q => {
+      const userAnswer = answers[q.id] !== undefined ? q.options[answers[q.id]] : 'Not answered'
+      const correctAnswer = q.options[q.correct]
+      const isCorrect = answers[q.id] === q.correct
+      return `
+        <tr>
+          <td style="padding:8px;border:1px solid #ddd;vertical-align:top;width:40%">${q.question}</td>
+          <td style="padding:8px;border:1px solid #ddd;color:${isCorrect ? '#16a34a' : '#dc2626'}">${userAnswer}</td>
+          <td style="padding:8px;border:1px solid #ddd">${correctAnswer}</td>
+          <td style="padding:8px;border:1px solid #ddd;text-align:center;font-size:1.2em">${isCorrect ? '✅' : '❌'}</td>
+        </tr>`
+    }).join('')
+
+    printWindow.document.write(`<!DOCTYPE html><html><head><title>Workshop Results - ${name}</title>
+      <style>body{font-family:system-ui,sans-serif;padding:2rem;color:#1e293b}
+      h1{font-size:1.5rem;margin-bottom:0.5rem}
+      .meta{color:#64748b;font-size:0.9rem;margin-bottom:1.5rem}
+      .score-box{padding:1.2rem;border-radius:8px;text-align:center;margin-bottom:1.5rem;font-size:1.1rem}
+      .pass{background:#f0fdf4;border:2px solid #22c55e;color:#16a34a}
+      .fail{background:#fef2f2;border:2px solid #ef4444;color:#dc2626}
+      table{width:100%;border-collapse:collapse;font-size:0.85rem}
+      th{background:#f1f5f9;padding:8px;border:1px solid #ddd;text-align:left}
+      .explanation{margin-top:1.5rem;padding:1rem;background:#f8fafc;border-radius:6px}
+      .explanation h3{font-size:1rem;margin-bottom:0.5rem}
+      .exp-item{margin-bottom:0.8rem;font-size:0.82rem;line-height:1.5}
+      .exp-q{font-weight:600;color:#1e293b}
+      .exp-a{color:#64748b}
+      </style></head><body>
+      <h1>Kiro Configuration Kit — Workshop Knowledge Check</h1>
+      <div class="meta">Participant: <strong>${name || 'Anonymous'}</strong> | Date: ${now}</div>
+      <div class="score-box ${passed ? 'pass' : 'fail'}">
+        Score: <strong>${score} / ${total}</strong> (${pct}%) — ${passed ? 'PASSED ✅' : 'NEEDS REVIEW ❌ (70% required)'}
+      </div>
+      <table>
+        <thead><tr><th>Question</th><th>Your Answer</th><th>Correct Answer</th><th>Result</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="explanation">
+        <h3>Answer Explanations</h3>
+        ${knowledgeQuestions.map((q, i) => `<div class="exp-item"><div class="exp-q">${i + 1}. ${q.question}</div><div class="exp-a">${q.explanation}</div></div>`).join('')}
+      </div>
+      </body></html>`)
+    printWindow.document.close()
+    setTimeout(() => { printWindow.print() }, 300)
+  }
+
+  return (
+    <div className="kc-container">
+      <div className="kc-header">
+        <h2>📝 Knowledge Check</h2>
+        <p>Test your understanding of the Kiro Configuration Kit. 10 questions, 70% to pass.</p>
+      </div>
+
+      {!submitted && (
+        <div className="kc-name-row">
+          <label>Your name:</label>
+          <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Enter your name" className="kc-name-input" />
+        </div>
+      )}
+
+      <div className="kc-questions">
+        {knowledgeQuestions.map((q, qi) => (
+          <div key={q.id} className={`kc-question ${submitted ? (answers[q.id] === q.correct ? 'kc-correct' : 'kc-wrong') : ''}`}>
+            <div className="kc-q-header">
+              <span className="kc-q-num">{qi + 1}</span>
+              <span className="kc-q-text">{q.question}</span>
+            </div>
+            <div className="kc-options">
+              {q.options.map((opt, oi) => (
+                <button
+                  key={oi}
+                  className={`kc-option ${answers[q.id] === oi ? 'selected' : ''} ${submitted && oi === q.correct ? 'correct-answer' : ''} ${submitted && answers[q.id] === oi && oi !== q.correct ? 'wrong-answer' : ''}`}
+                  onClick={() => handleSelect(q.id, oi)}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+            {submitted && (
+              <div className="kc-explanation">{q.explanation}</div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {!submitted ? (
+        <button className="kc-submit" onClick={() => setSubmitted(true)} disabled={Object.keys(answers).length < total}>
+          Submit ({Object.keys(answers).length}/{total} answered)
+        </button>
+      ) : (
+        <div className="kc-results">
+          <div className={`kc-score ${passed ? 'kc-pass' : 'kc-fail'}`}>
+            Score: {score}/{total} ({pct}%) — {passed ? 'PASSED ✅' : 'NEEDS REVIEW ❌'}
+          </div>
+          <button className="kc-export" onClick={handleExportPDF}>📄 Export Results as PDF</button>
+          <button className="kc-retry" onClick={() => { setAnswers({}); setSubmitted(false) }}>🔄 Retry</button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function WorkshopGuide() {
   const [activePart, setActivePart] = useState('overview')
   const [copiedIdx, setCopiedIdx] = useState(null)
@@ -1635,8 +1888,19 @@ function WorkshopGuide() {
             {p.duration && <span className="workshop-nav-duration">{p.duration}</span>}
           </button>
         ))}
+        <button
+          className={`workshop-nav-item ${activePart === 'knowledge-check' ? 'active' : ''}`}
+          onClick={() => setActivePart('knowledge-check')}
+        >
+          <span className="workshop-nav-icon">📝</span>
+          <span className="workshop-nav-label">Knowledge Check</span>
+        </button>
       </div>
       <div className="workshop-content">
+        {activePart === 'knowledge-check' ? (
+          <KnowledgeCheck />
+        ) : (
+        <>
         <div className="workshop-part-header">
           <span className="workshop-part-icon">{part.icon}</span>
           <h2>{part.title}</h2>
@@ -1742,6 +2006,8 @@ function WorkshopGuide() {
             return null
           })}
         </div>
+        </>
+        )}
       </div>
     </div>
   )
