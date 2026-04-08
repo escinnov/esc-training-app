@@ -126,7 +126,7 @@ const slides = [
         title: 'Skills',
         color: '#f59e0b',
         desc: 'Interactive decision flows before recommending architecture',
-        items: ['Compute selection (Lambda vs ECS)', 'Storage selection (DynamoDB vs RDS)', 'Tenant strategy (isolation models)'],
+        items: ['Compute selection (Lambda vs ECS)', 'Storage selection (DynamoDB vs RDS)', 'Tenant strategy (isolation models)', 'Offline security (encryption vs HMAC vs both)'],
       },
     ],
   },
@@ -179,23 +179,57 @@ const slides = [
         trigger: 'Mention Lambda, ECS, container, microservice...',
         questions: 7,
         outcome: 'Lambda vs Containers recommendation with cost estimates',
-        example: '"Should I use Lambda for this background job?" → 7 questions → recommendation',
+        example: '"Should I use Lambda for this background job?" → 7 questions → recommendation → creates compute-decision.md steering file',
       },
       {
         name: 'Storage Selection',
         trigger: 'Mention database, DynamoDB, RDS, PostgreSQL...',
         questions: 9,
         outcome: 'DynamoDB vs PostgreSQL vs MySQL + serverless vs serverful',
-        example: '"Which database for this feature?" → 3-phase flow → recommendation',
+        example: '"Which database for this feature?" → 3-phase flow → recommendation → creates storage-decision.md steering file',
       },
       {
         name: 'Tenant Strategy',
         trigger: 'Mention multi-tenant, SaaS, tenant isolation...',
         questions: 5,
         outcome: 'Row-level → Schema-per-tenant → Stack-per-tenant recommendation',
-        example: '"We need to support multiple organizations" → 5 questions → model',
+        example: '"We need to support multiple organizations" → 5 questions → model → creates tenant-decision.md steering file',
+      },
+      {
+        name: 'Offline Security Selection',
+        trigger: 'Mention offline security, SQLCipher, HMAC, tamper detection...',
+        questions: 8,
+        outcome: 'Server validation only → HMAC signatures → SQLCipher → All combined',
+        example: '"How should we protect offline data?" → 3-phase flow → recommendation → creates offline-data-security.md steering file',
       },
     ],
+  },
+  {
+    id: 'persistent-decisions',
+    type: 'two-column',
+    title: 'Persistent Decisions — Skills That Remember',
+    left: {
+      heading: 'Before (Skills Forgot)',
+      color: '#ef4444',
+      items: [
+        'Skill recommends PostgreSQL → next interaction forgets',
+        'Developer asks about database again → re-runs the skill',
+        'New team member doesn\'t know the decision was made',
+        'Inconsistent choices across the codebase',
+        'Wasted credits re-running skills for the same project',
+      ],
+    },
+    right: {
+      heading: 'Now (Skills Persist)',
+      color: '#22c55e',
+      items: [
+        'Skill recommends PostgreSQL → creates storage-decision.md',
+        'Steering file loads automatically on model/migration files',
+        'New team member gets the decision enforced automatically',
+        'Consistent choices — the decision is code-reviewed like any other file',
+        'To change: delete the file and re-trigger the skill, or edit directly',
+      ],
+    },
   },
   {
     id: 'pillars-title',
@@ -1142,6 +1176,16 @@ const skillsGuide = [
     when: 'When designing a SaaS application that serves multiple customers/organizations. When deciding how to isolate tenant data.',
     whenNot: 'When building a single-tenant application. When the tenancy model is already decided and you\'re implementing within it.',
     activate: 'Mention any of these keywords in chat: multi-tenant, tenancy, SaaS, tenant isolation, per-customer, white-label, multiple organizations. The skill activates automatically.',
+    deactivate: 'Skills only activate on keyword triggers — they don\'t consume credits when not triggered. No deactivation needed.',
+  },
+  {
+    name: 'Offline Security Selection',
+    folder: 'offline-security-selection',
+    icon: '🔐',
+    what: 'Guided 8-question, 3-phase decision flow: data sensitivity → tamper risk → performance constraints. Recommends server validation only, HMAC signatures, SQLCipher encryption, or all combined.',
+    when: 'When building offline-capable apps that store data locally. When deciding how to protect client-side data from tampering or exposure.',
+    whenNot: 'When building server-only features with no offline component. When the offline security approach is already decided.',
+    activate: 'Mention any of these keywords in chat: offline security, client-side encryption, tamper detection, SQLCipher, HMAC, offline integrity, field data security. The skill activates automatically.',
     deactivate: 'Skills only activate on keyword triggers — they don\'t consume credits when not triggered. No deactivation needed.',
   },
 ]
@@ -2107,10 +2151,10 @@ function AuthenticatedApp() {
 
   return (
     <>
-      <nav className="top-nav">
-        <button className={page === 'presentation' ? 'nav-active' : ''} onClick={() => setPage('presentation')}>📊 Training</button>
-        <button className={page === 'guide' ? 'nav-active' : ''} onClick={() => setPage('guide')}>📖 Activation Guide</button>
-        <button className={page === 'workshop' ? 'nav-active' : ''} onClick={() => setPage('workshop')}>🛠️ Workshop</button>
+      <nav className="top-nav" data-testid="authenticated-app-top-nav">
+        <button className={page === 'presentation' ? 'nav-active' : ''} onClick={() => setPage('presentation')} data-testid="authenticated-app-nav-training-button">📊 Training</button>
+        <button className={page === 'guide' ? 'nav-active' : ''} onClick={() => setPage('guide')} data-testid="authenticated-app-nav-guide-button">📖 Activation Guide</button>
+        <button className={page === 'workshop' ? 'nav-active' : ''} onClick={() => setPage('workshop')} data-testid="authenticated-app-nav-workshop-button">🛠️ Workshop</button>
       </nav>
       {page === 'presentation' && <App />}
       {page === 'guide' && <ActivationGuide />}
@@ -2119,7 +2163,7 @@ function AuthenticatedApp() {
           ? <WorkshopGuide />
           : (
             <div className="login-gate">
-              <form className="login-form" onSubmit={handleWorkshopRegister}>
+              <form className="login-form" onSubmit={handleWorkshopRegister} data-testid="authenticated-app-register-form">
                 <div className="login-icon">🛠️</div>
                 <h2>Workshop Access</h2>
                 <p>Enter your name and email to access the workshop. Your knowledge check results will be recorded.</p>
@@ -2129,15 +2173,17 @@ function AuthenticatedApp() {
                   onChange={(e) => setWorkshopName(e.target.value)}
                   placeholder="Your full name"
                   autoFocus
+                  data-testid="authenticated-app-name-input"
                 />
                 <input
                   type="email"
                   value={workshopEmail}
                   onChange={(e) => setWorkshopEmail(e.target.value)}
                   placeholder="Your email address"
+                  data-testid="authenticated-app-email-input"
                 />
-                {workshopError && <div className="login-error">{workshopError}</div>}
-                <button type="submit" disabled={workshopLoading || !workshopName || !workshopEmail}>
+                {workshopError && <div className="login-error" data-testid="authenticated-app-register-error">{workshopError}</div>}
+                <button type="submit" disabled={workshopLoading || !workshopName || !workshopEmail} data-testid="authenticated-app-register-button">
                   {workshopLoading ? 'Registering...' : 'Enter Workshop'}
                 </button>
               </form>

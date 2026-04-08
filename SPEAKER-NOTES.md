@@ -46,11 +46,22 @@
 
 ## Slide 7: Skills Deep Dive
 
-- Skills prevent the "let's just use Lambda" or "let's just use Postgres" gut-feel decisions.
-- Compute selection: 7 questions before recommending Lambda vs containers. Includes cost estimates.
-- Storage selection: 3-phase flow — data model, engine, deployment mode. Prevents choosing DynamoDB when you need joins.
-- Tenant strategy: prevents the most dangerous mistake in SaaS — choosing row-level isolation for regulated industries.
-- Key message: these aren't suggestions. Kiro will NOT recommend a platform without completing the question flow.
+- Now 4 skills instead of 3 — the new one is Offline Security Selection.
+- Walk through each:
+  - Compute selection: 7 questions → Lambda vs containers with cost estimates
+  - Storage selection: 3-phase, 9 questions → DynamoDB vs PostgreSQL vs MySQL + deployment mode
+  - Tenant strategy: 5 questions → isolation model from row-level to stack-per-tenant
+  - Offline security selection (NEW): 8 questions across 3 phases (data sensitivity → tamper risk → performance) → recommends server validation only, HMAC signatures, SQLCipher, or all combined
+- Key new feature: ALL skills now create a persistent steering file after making a recommendation. The decision becomes a fileMatch steering rule that loads automatically on relevant code.
+- This solves the "skill amnesia" problem — previously, a skill would recommend PostgreSQL but the next interaction wouldn't know that decision was made.
+- To change a decision later: delete the generated steering file and re-trigger the skill, or edit the file directly.
+
+## Slide 8: Persistent Decisions — Skills That Remember
+
+- This is a new slide showing the before/after of persistent decisions.
+- Left side (before): skills forgot their recommendations, developers re-ran skills, new team members didn't know decisions were made, inconsistent choices.
+- Right side (now): skills create steering files, decisions load automatically, new team members get them enforced, decisions are version-controlled and code-reviewed.
+- Key message: architectural decisions are now treated like code — versioned, reviewed, and enforced automatically.
 
 ## Slide 8: Section Break — 6 Pillars
 
