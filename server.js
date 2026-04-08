@@ -32,19 +32,26 @@ app.post('/api/auth', (req, res) => {
 // Workshop: send verification code
 app.post('/api/workshop/send-code', async (req, res) => {
   const { name, email } = req.body
+  console.log(`[send-code] Request received: name=${name}, email=${email}`)
+  
   if (!name || !email) {
     return res.status(400).json({ success: false, message: 'Name and email are required' })
   }
   if (!resend) {
+    console.log('[send-code] ERROR: Resend not configured. RESEND_API_KEY:', RESEND_API_KEY ? 'set' : 'NOT SET')
     return res.status(500).json({ success: false, message: 'Email service not configured' })
   }
 
   const code = String(Math.floor(100000 + Math.random() * 900000))
   verificationCodes[email] = { code, name, expiresAt: Date.now() + 10 * 60 * 1000 }
+  console.log(`[send-code] Generated code for ${email}: ${code}`)
 
   try {
-    await resend.emails.send({
-      from: SENDER_EMAIL,
+    const fromAddress = `Kiro Workshop <${SENDER_EMAIL}>`
+    console.log(`[send-code] Sending email from: ${fromAddress} to: ${email}`)
+    
+    const result = await resend.emails.send({
+      from: fromAddress,
       to: email,
       subject: 'Kiro Workshop — Your Verification Code',
       html: `
@@ -59,10 +66,12 @@ app.post('/api/workshop/send-code', async (req, res) => {
         </div>
       `,
     })
+    console.log('[send-code] Resend response:', JSON.stringify(result))
     res.json({ success: true })
   } catch (err) {
-    console.error('Failed to send verification email:', err)
-    res.status(500).json({ success: false, message: 'Failed to send email' })
+    console.error('[send-code] Failed to send verification email:', err.message || err)
+    console.error('[send-code] Full error:', JSON.stringify(err, null, 2))
+    res.status(500).json({ success: false, message: 'Failed to send email: ' + (err.message || 'Unknown error') })
   }
 })
 
@@ -166,4 +175,7 @@ app.get('/{*splat}', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
+  console.log(`RESEND_API_KEY: ${RESEND_API_KEY ? 'set (' + RESEND_API_KEY.substring(0, 6) + '...)' : 'NOT SET'}`)
+  console.log(`ADMIN_EMAIL: ${ADMIN_EMAIL || 'NOT SET'}`)
+  console.log(`SENDER_EMAIL: ${SENDER_EMAIL}`)
 })
