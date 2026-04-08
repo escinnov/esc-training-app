@@ -1903,7 +1903,7 @@ function KnowledgeCheck() {
           <div className={`kc-score ${passed ? 'kc-pass' : 'kc-fail'}`}>
             Score: {score}/{total} ({pct}%) — {passed ? 'PASSED ✅' : 'NEEDS REVIEW ❌'}
           </div>
-          {emailSent && <div className="kc-email-sent">✅ Results sent to {email} and the workshop administrator.</div>}
+          {emailSent && <div className="kc-email-sent">✅ Results sent to the workshop administrator.</div>}
           {emailError && <div className="kc-email-error">⚠️ {emailError} — use the PDF export below as backup.</div>}
           <button className="kc-export" onClick={handleExportPDF}>📄 Export Results as PDF</button>
           <button className="kc-retry" onClick={() => { setAnswers({}); setSubmitted(false); setEmailSent(false); setEmailError('') }}>🔄 Retry</button>
@@ -2073,42 +2073,18 @@ function AuthenticatedApp() {
   const [workshopAuthed, setWorkshopAuthed] = useState(() => sessionStorage.getItem('workshop-authenticated') === 'true')
   const [workshopName, setWorkshopName] = useState(() => sessionStorage.getItem('workshop-name') || '')
   const [workshopEmail, setWorkshopEmail] = useState(() => sessionStorage.getItem('workshop-email') || '')
-  const [verifyStep, setVerifyStep] = useState('form') // 'form' | 'code'
-  const [verifyCode, setVerifyCode] = useState('')
   const [workshopError, setWorkshopError] = useState('')
   const [workshopLoading, setWorkshopLoading] = useState(false)
 
-  const handleSendCode = async (e) => {
+  const handleWorkshopRegister = async (e) => {
     e.preventDefault()
     setWorkshopLoading(true)
     setWorkshopError('')
     try {
-      const res = await fetch('/api/workshop/send-code', {
+      const res = await fetch('/api/workshop/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: workshopName, email: workshopEmail }),
-      })
-      const data = await res.json()
-      if (data.success) {
-        setVerifyStep('code')
-      } else {
-        setWorkshopError(data.message || 'Failed to send code')
-      }
-    } catch {
-      setWorkshopError('Connection error')
-    }
-    setWorkshopLoading(false)
-  }
-
-  const handleVerifyCode = async (e) => {
-    e.preventDefault()
-    setWorkshopLoading(true)
-    setWorkshopError('')
-    try {
-      const res = await fetch('/api/workshop/verify-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: workshopEmail, code: verifyCode }),
       })
       const data = await res.json()
       if (data.success) {
@@ -2117,7 +2093,7 @@ function AuthenticatedApp() {
         sessionStorage.setItem('workshop-email', workshopEmail)
         setWorkshopAuthed(true)
       } else {
-        setWorkshopError(data.message || 'Invalid code')
+        setWorkshopError(data.message || 'Registration failed')
       }
     } catch {
       setWorkshopError('Connection error')
@@ -2131,10 +2107,10 @@ function AuthenticatedApp() {
 
   return (
     <>
-      <nav className="top-nav" data-testid="authenticated-app-top-nav">
-        <button className={page === 'presentation' ? 'nav-active' : ''} onClick={() => setPage('presentation')} data-testid="authenticated-app-nav-training-button">📊 Training</button>
-        <button className={page === 'guide' ? 'nav-active' : ''} onClick={() => setPage('guide')} data-testid="authenticated-app-nav-guide-button">📖 Activation Guide</button>
-        <button className={page === 'workshop' ? 'nav-active' : ''} onClick={() => setPage('workshop')} data-testid="authenticated-app-nav-workshop-button">🛠️ Workshop</button>
+      <nav className="top-nav">
+        <button className={page === 'presentation' ? 'nav-active' : ''} onClick={() => setPage('presentation')}>📊 Training</button>
+        <button className={page === 'guide' ? 'nav-active' : ''} onClick={() => setPage('guide')}>📖 Activation Guide</button>
+        <button className={page === 'workshop' ? 'nav-active' : ''} onClick={() => setPage('workshop')}>🛠️ Workshop</button>
       </nav>
       {page === 'presentation' && <App />}
       {page === 'guide' && <ActivationGuide />}
@@ -2143,55 +2119,28 @@ function AuthenticatedApp() {
           ? <WorkshopGuide />
           : (
             <div className="login-gate">
-              {verifyStep === 'form' ? (
-                <form className="login-form" onSubmit={handleSendCode} data-testid="workshop-gate-send-code-form">
-                  <div className="login-icon">🛠️</div>
-                  <h2>Workshop Access</h2>
-                  <p>Enter your name and email to receive a verification code.</p>
-                  <input
-                    type="text"
-                    value={workshopName}
-                    onChange={(e) => setWorkshopName(e.target.value)}
-                    placeholder="Your full name"
-                    autoFocus
-                    data-testid="workshop-gate-name-input"
-                  />
-                  <input
-                    type="email"
-                    value={workshopEmail}
-                    onChange={(e) => setWorkshopEmail(e.target.value)}
-                    placeholder="Your email address"
-                    data-testid="workshop-gate-email-input"
-                  />
-                  {workshopError && <div className="login-error" data-testid="workshop-gate-error">{workshopError}</div>}
-                  <button type="submit" disabled={workshopLoading || !workshopName || !workshopEmail} data-testid="workshop-gate-send-code-button">
-                    {workshopLoading ? 'Sending...' : 'Send Verification Code'}
-                  </button>
-                </form>
-              ) : (
-                <form className="login-form" onSubmit={handleVerifyCode} data-testid="workshop-gate-verify-code-form">
-                  <div className="login-icon">📧</div>
-                  <h2>Check Your Email</h2>
-                  <p>We sent a 6-digit code to <strong>{workshopEmail}</strong></p>
-                  <input
-                    type="text"
-                    value={verifyCode}
-                    onChange={(e) => setVerifyCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    placeholder="Enter 6-digit code"
-                    autoFocus
-                    maxLength={6}
-                    style={{ textAlign: 'center', letterSpacing: '0.3em', fontSize: '1.3rem' }}
-                    data-testid="workshop-gate-verify-code-input"
-                  />
-                  {workshopError && <div className="login-error" data-testid="workshop-gate-verify-error">{workshopError}</div>}
-                  <button type="submit" disabled={workshopLoading || verifyCode.length !== 6} data-testid="workshop-gate-verify-button">
-                    {workshopLoading ? 'Verifying...' : 'Verify'}
-                  </button>
-                  <button type="button" className="login-back-btn" onClick={() => { setVerifyStep('form'); setWorkshopError('') }} data-testid="workshop-gate-back-button">
-                    ← Back
-                  </button>
-                </form>
-              )}
+              <form className="login-form" onSubmit={handleWorkshopRegister}>
+                <div className="login-icon">🛠️</div>
+                <h2>Workshop Access</h2>
+                <p>Enter your name and email to access the workshop. Your knowledge check results will be recorded.</p>
+                <input
+                  type="text"
+                  value={workshopName}
+                  onChange={(e) => setWorkshopName(e.target.value)}
+                  placeholder="Your full name"
+                  autoFocus
+                />
+                <input
+                  type="email"
+                  value={workshopEmail}
+                  onChange={(e) => setWorkshopEmail(e.target.value)}
+                  placeholder="Your email address"
+                />
+                {workshopError && <div className="login-error">{workshopError}</div>}
+                <button type="submit" disabled={workshopLoading || !workshopName || !workshopEmail}>
+                  {workshopLoading ? 'Registering...' : 'Enter Workshop'}
+                </button>
+              </form>
             </div>
           )
       )}
