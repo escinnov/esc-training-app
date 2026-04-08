@@ -1,17 +1,23 @@
 import express from 'express'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
-import { Resend } from 'resend'
+import nodemailer from 'nodemailer'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const app = express()
 const PORT = process.env.PORT || 3000
 const ACCESS_PASSWORD = process.env.ACCESS_PASSWORD || 'changeme'
-const RESEND_API_KEY = process.env.RESEND_API_KEY || ''
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || ''
-const SENDER_EMAIL = process.env.SENDER_EMAIL || 'onboarding@resend.dev'
+const GMAIL_USER = process.env.GMAIL_USER || ''
+const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD || ''
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || GMAIL_USER
 
-const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null
+let transporter = null
+if (GMAIL_USER && GMAIL_APP_PASSWORD) {
+  transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD },
+  })
+}
 
 // In-memory verification codes: { email: { code, name, expiresAt } }
 const verificationCodes = {}
@@ -32,26 +38,23 @@ app.post('/api/auth', (req, res) => {
 // Workshop: send verification code
 app.post('/api/workshop/send-code', async (req, res) => {
   const { name, email } = req.body
-  console.log(`[send-code] Request received: name=${name}, email=${email}`)
-  
+  console.log(`[send-code] Request: name=${name}, email=${email}`)
+
   if (!name || !email) {
     return res.status(400).json({ success: false, message: 'Name and email are required' })
   }
-  if (!resend) {
-    console.log('[send-code] ERROR: Resend not configured. RESEND_API_KEY:', RESEND_API_KEY ? 'set' : 'NOT SET')
+  if (!transporter) {
+    console.log('[send-code] ERROR: Gmail not configured. GMAIL_USER:', GMAIL_USER ? 'set' : 'NOT SET')
     return res.status(500).json({ success: false, message: 'Email service not configured' })
   }
 
   const code = String(Math.floor(100000 + Math.random() * 900000))
   verificationCodes[email] = { code, name, expiresAt: Date.now() + 10 * 60 * 1000 }
-  console.log(`[send-code] Generated code for ${email}: ${code}`)
+  console.log(`[send-code] Code for ${email}: ${code}`)
 
   try {
-    const fromAddress = `Kiro Workshop <${SENDER_EMAIL}>`
-    console.log(`[send-code] Sending email from: ${fromAddress} to: ${email}`)
-    
-    const result = await resend.emails.send({
-      from: fromAddress,
+    await transporter.sendMail({
+      from: `Kiro Workshop <${GMAIL_USER}>`,
       to: email,
       subject: 'Kiro Workshop — Your Verification Code',
       html: `
@@ -66,12 +69,11 @@ app.post('/api/workshop/send-code', async (req, res) => {
         </div>
       `,
     })
-    console.log('[send-code] Resend response:', JSON.stringify(result))
+    console.log(`[send-code] Email sent to ${email}`)
     res.json({ success: true })
   } catch (err) {
-    console.error('[send-code] Failed to send verification email:', err.message || err)
-    console.error('[send-code] Full error:', JSON.stringify(err, null, 2))
-    res.status(500).json({ success: false, message: 'Failed to send email: ' + (err.message || 'Unknown error') })
+    console.error('[send-code] Failed:', err.message)
+    res.status(500).json({ success: false, message: 'Failed to send email: ' + err.message })
   }
 })
 
@@ -99,7 +101,7 @@ app.post('/api/workshop/verify-code', (req, res) => {
 app.post('/api/workshop/submit-results', async (req, res) => {
   const { name, email, score, total, pct, passed, answers, questions } = req.body
 
-  if (!resend) {
+  if (!transporter) {
     return res.status(500).json({ success: false, message: 'Email service not configured' })
   }
 
@@ -145,26 +147,27 @@ app.post('/api/workshop/submit-results', async (req, res) => {
 
   try {
     // Send to participant
-    await resend.emails.send({
-      from: SENDER_EMAIL,
+    await transporter.sendMail({
+      from: `Kiro Workshop <${GMAIL_USER}>`,
       to: email,
       subject: `Kiro Workshop Results — ${passed ? 'PASSED' : 'Needs Review'} (${pct}%)`,
       html: resultHtml,
     })
 
     // Send to admin
-    if (ADMIN_EMAIL) {
-      await resend.emails.send({
-        from: SENDER_EMAIL,
+    if (ADMIN_EMAIL && ADMIN_EMAIL !== email) {
+      await transporter.sendMail({
+        from: `Kiro Workshop <${GMAIL_USER}>`,
         to: ADMIN_EMAIL,
         subject: `[Workshop Result] ${name} — ${score}/${total} (${pct}%)`,
         html: resultHtml,
       })
     }
 
+    console.log(`[submit-results] Results sent for ${name} (${email}): ${score}/${total}`)
     res.json({ success: true })
   } catch (err) {
-    console.error('Failed to send results email:', err)
+    console.error('[submit-results] Failed:', err.message)
     res.status(500).json({ success: false, message: 'Failed to send results email' })
   }
 })
@@ -175,7 +178,7 @@ app.get('/{*splat}', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
-  console.log(`RESEND_API_KEY: ${RESEND_API_KEY ? 'set (' + RESEND_API_KEY.substring(0, 6) + '...)' : 'NOT SET'}`)
+  console.log(`GMAIL_USER: ${GMAIL_USER ? 'set' : 'NOT SET'}`)
+  console.log(`GMAIL_APP_PASSWORD: ${GMAIL_APP_PASSWORD ? 'set' : 'NOT SET'}`)
   console.log(`ADMIN_EMAIL: ${ADMIN_EMAIL || 'NOT SET'}`)
-  console.log(`SENDER_EMAIL: ${SENDER_EMAIL}`)
 })
