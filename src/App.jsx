@@ -1604,6 +1604,34 @@ const workshopParts = [
       { type: 'issue', title: 'sqlalchemy.exc.OperationalError: table txn_diary_entries already exists', fix: 'alembic stamp 0001\nalembic upgrade head' },
     ],
   },
+  {
+    id: 'bonus',
+    title: 'Bonus Challenges',
+    icon: '🏆',
+    duration: null,
+    content: [
+      { type: 'intro', text: 'Finished early? These challenges go deeper into the kit. Each one exercises a different manual steering rule or skill that wasn\'t covered in the main workshop.' },
+      { type: 'heading', text: '⭐ Challenge 1: CSV Import (Data Upload Rules)' },
+      { type: 'step', num: 'B1.1', title: 'Activate data-upload-rules and build an import', prompt: '#data-upload-rules\n\nBuild a CSV import feature for diary entries. Users upload a CSV file with columns: title, content, mood, tags. The system should validate each row, reject invalid rows with error details, and import valid rows. Classify this as a light upload.', promptExplain: 'This activates the manual data-upload-rules steering. The "classify as light upload" instruction tells Kiro to process synchronously in a single transaction. The steering will enforce: row-level validation, same sanitization as API input, collect all errors (not fail on first), and return a complete error report.' },
+      { type: 'observe', text: 'Kiro should: validate file type by magic bytes (not extension), validate headers, apply entity-standards sanitization to every row, parse dates per timezone-rules, and use atomic transaction for the batch.' },
+      { type: 'heading', text: '⭐⭐ Challenge 2: Team Diary (Tenant Strategy)' },
+      { type: 'step', num: 'B2.1', title: 'Trigger the tenant-strategy skill', prompt: 'I want to turn the Dev Diary into a team product where multiple organizations can use it. Each organization should only see their own data. We expect 10-50 organizations.', promptExplain: 'Mentioning "multiple organizations" and "only see their own data" triggers the tenant-strategy skill. The skill will ask about customer count, isolation needs, compliance, and auth policies. For 10-50 orgs with no special compliance, expect schema-per-tenant recommendation.' },
+      { type: 'observe', text: 'The skill should ask 5 questions and recommend an isolation model. For this scenario, schema-per-tenant is the likely recommendation — separate schemas in the same database, good balance of isolation and cost.' },
+      { type: 'step', num: 'B2.2', title: 'Implement tenant isolation', prompt: 'Implement schema-per-tenant isolation for the Dev Diary. Each organization gets its own database schema. The API should resolve the tenant from the JWT token and connect to the correct schema. Make sure report queries and cache keys include tenant context.', promptExplain: 'This tests whether Kiro applies tenant scoping from multiple steering rules: storage-design-rules (schema naming), report-generation-rules (tenant in cache keys), and entity-standards (created_by from tenant-scoped JWT).' },
+      { type: 'heading', text: '⭐⭐ Challenge 3: Background Processing (Compute Selection)' },
+      { type: 'step', num: 'B3.1', title: 'Trigger the compute-selection skill', prompt: 'I need to add a feature that sends a daily email summary of diary entries to each user. It runs once a day at 8 AM, processes all users, and takes about 2 minutes. Should I use Lambda or a container?', promptExplain: 'This triggers the compute-selection skill. The 7 questions will cover: workload type (scheduled job), execution time (2 min), memory (light), traffic (once daily), scale-to-zero (yes), special requirements (none), existing container (no). Expect Lambda + EventBridge scheduler recommendation.' },
+      { type: 'observe', text: 'The skill should recommend Lambda with a scheduler (EventBridge). Execution under 15 min + scheduled + scale-to-zero = Lambda is the right fit. Cost estimate: ~$0.01/month for a daily 2-minute job.' },
+      { type: 'heading', text: '⭐⭐⭐ Challenge 4: Offline Diary (Offline Sync)' },
+      { type: 'step', num: 'B4.1', title: 'Design the offline sync protocol', prompt: '#offline-sync-rules\n\nDesign an offline sync protocol for a mobile version of the Dev Diary. Users should be able to create and edit entries while offline, then sync when they reconnect. Use last-write-wins for conflict resolution since entries are single-user.', promptExplain: 'This activates offline-sync-rules (manual). The steering will enforce: delta sync (not full), pull-before-push, version column for conflict detection, local SQLite storage with sync_status metadata, batch endpoints, and idempotent sync. The "last-write-wins" instruction tells Kiro which conflict resolution strategy to use.' },
+      { type: 'observe', text: 'Kiro should design: sync manifest (which entities to sync), local schema with sync_status/last_synced_at/local_version columns, pull-then-push flow, batch endpoints, and exponential backoff for retries.' },
+      { type: 'heading', text: '⭐⭐⭐ Challenge 5: Heavy Report (Report Generation)' },
+      { type: 'step', num: 'B5.1', title: 'Build an organization-wide analytics report', prompt: '#report-generation-rules\n\nBuild an analytics dashboard that shows: total entries per user across the entire organization, mood distribution over the last 12 months, most active days of the week, and tag frequency. This will query across all users in the organization (potentially 10,000+ entries). Generate it as a downloadable PDF.', promptExplain: 'This is deliberately a heavy report — multi-table aggregation, 10K+ rows, cross-user data, PDF output. The steering should classify it as heavy and enforce: read replica (not primary DB), async processing with job queue, streaming rows, S3 storage with pre-signed URL, materialized views for frequent queries, and resource limits.' },
+      { type: 'observe', text: 'Compare this to Challenge 6 in the main workshop (light CSV export). Kiro should use a completely different architecture: async job, background worker, S3 storage, pre-signed URL, read replica. The contrast demonstrates why the light/heavy classification matters.' },
+      { type: 'heading', text: '⭐⭐⭐ Challenge 6: Create Your Own Steering Rule' },
+      { type: 'step', num: 'B6.1', title: 'Write a custom steering rule', text: 'Create a new steering file at .kiro/steering/api-versioning-rules.md that enforces API versioning standards for the project. Include rules for: URL-based versioning (/v1/entries), backward compatibility requirements, deprecation process, and response headers. Set it to inclusion: manual.' },
+      { type: 'observe', text: 'This challenge tests whether you understand the steering file format: front matter with inclusion mode, mandatory rules, code examples, and anti-patterns. After creating it, activate it with #api-versioning-rules and ask Kiro to version the entries API.' },
+    ],
+  },
 ]
 
 const knowledgeQuestions = [
@@ -2103,10 +2131,10 @@ function AuthenticatedApp() {
 
   return (
     <>
-      <nav className="top-nav">
-        <button className={page === 'presentation' ? 'nav-active' : ''} onClick={() => setPage('presentation')}>📊 Training</button>
-        <button className={page === 'guide' ? 'nav-active' : ''} onClick={() => setPage('guide')}>📖 Activation Guide</button>
-        <button className={page === 'workshop' ? 'nav-active' : ''} onClick={() => setPage('workshop')}>🛠️ Workshop</button>
+      <nav className="top-nav" data-testid="authenticated-app-top-nav">
+        <button className={page === 'presentation' ? 'nav-active' : ''} onClick={() => setPage('presentation')} data-testid="authenticated-app-nav-training-button">📊 Training</button>
+        <button className={page === 'guide' ? 'nav-active' : ''} onClick={() => setPage('guide')} data-testid="authenticated-app-nav-guide-button">📖 Activation Guide</button>
+        <button className={page === 'workshop' ? 'nav-active' : ''} onClick={() => setPage('workshop')} data-testid="authenticated-app-nav-workshop-button">🛠️ Workshop</button>
       </nav>
       {page === 'presentation' && <App />}
       {page === 'guide' && <ActivationGuide />}
@@ -2116,7 +2144,7 @@ function AuthenticatedApp() {
           : (
             <div className="login-gate">
               {verifyStep === 'form' ? (
-                <form className="login-form" onSubmit={handleSendCode}>
+                <form className="login-form" onSubmit={handleSendCode} data-testid="workshop-gate-send-code-form">
                   <div className="login-icon">🛠️</div>
                   <h2>Workshop Access</h2>
                   <p>Enter your name and email to receive a verification code.</p>
@@ -2126,20 +2154,22 @@ function AuthenticatedApp() {
                     onChange={(e) => setWorkshopName(e.target.value)}
                     placeholder="Your full name"
                     autoFocus
+                    data-testid="workshop-gate-name-input"
                   />
                   <input
                     type="email"
                     value={workshopEmail}
                     onChange={(e) => setWorkshopEmail(e.target.value)}
                     placeholder="Your email address"
+                    data-testid="workshop-gate-email-input"
                   />
-                  {workshopError && <div className="login-error">{workshopError}</div>}
-                  <button type="submit" disabled={workshopLoading || !workshopName || !workshopEmail}>
+                  {workshopError && <div className="login-error" data-testid="workshop-gate-error">{workshopError}</div>}
+                  <button type="submit" disabled={workshopLoading || !workshopName || !workshopEmail} data-testid="workshop-gate-send-code-button">
                     {workshopLoading ? 'Sending...' : 'Send Verification Code'}
                   </button>
                 </form>
               ) : (
-                <form className="login-form" onSubmit={handleVerifyCode}>
+                <form className="login-form" onSubmit={handleVerifyCode} data-testid="workshop-gate-verify-code-form">
                   <div className="login-icon">📧</div>
                   <h2>Check Your Email</h2>
                   <p>We sent a 6-digit code to <strong>{workshopEmail}</strong></p>
@@ -2151,12 +2181,13 @@ function AuthenticatedApp() {
                     autoFocus
                     maxLength={6}
                     style={{ textAlign: 'center', letterSpacing: '0.3em', fontSize: '1.3rem' }}
+                    data-testid="workshop-gate-verify-code-input"
                   />
-                  {workshopError && <div className="login-error">{workshopError}</div>}
-                  <button type="submit" disabled={workshopLoading || verifyCode.length !== 6}>
+                  {workshopError && <div className="login-error" data-testid="workshop-gate-verify-error">{workshopError}</div>}
+                  <button type="submit" disabled={workshopLoading || verifyCode.length !== 6} data-testid="workshop-gate-verify-button">
                     {workshopLoading ? 'Verifying...' : 'Verify'}
                   </button>
-                  <button type="button" className="login-back-btn" onClick={() => { setVerifyStep('form'); setWorkshopError('') }}>
+                  <button type="button" className="login-back-btn" onClick={() => { setVerifyStep('form'); setWorkshopError('') }} data-testid="workshop-gate-back-button">
                     ← Back
                   </button>
                 </form>
