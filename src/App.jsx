@@ -1809,6 +1809,71 @@ const knowledgeQuestions = [
     correct: 1,
     explanation: 'concurrency-and-locking-rules.md mandates optimistic concurrency with a version column for user-facing updates. The version is checked on every update — if it doesn\'t match (because User A already incremented it), a ConflictError is returned. This is preferred over pessimistic locking (FOR UPDATE) to reduce lock hold time.',
   },
+  {
+    id: 11,
+    question: 'After the storage-selection skill recommends PostgreSQL for your project, what happens to ensure this decision is enforced in future interactions?',
+    type: 'multiple',
+    options: [
+      'Nothing — you need to re-run the skill every time you discuss databases',
+      'Kiro remembers it in memory until you close the IDE',
+      'The skill creates a storage-decision.md steering file with fileMatch that loads automatically on model/migration files',
+      'It\'s saved in your Kiro account settings',
+    ],
+    correct: 2,
+    explanation: 'All skills now create a persistent steering file after making a recommendation. storage-selection creates storage-decision.md with fileMatch on models, migrations, schema, db, and repositories directories. This means the decision loads automatically whenever you edit data-related code — no need to re-run the skill.',
+  },
+  {
+    id: 12,
+    question: 'Your team builds a field data collection app that works offline. Users collect inspection data on tablets and sync when back in the office. A user could modify the local SQLite database to change inspection results. Which offline security approach should you use?',
+    type: 'multiple',
+    options: [
+      'Approach 1: Server-side validation only — zero overhead, server catches invalid data',
+      'Approach 2: SQLCipher encryption — prevents reading the database file',
+      'Approach 3: HMAC signatures + server validation — detects any modification with ~1-2ms overhead per record on write, zero on reads',
+      'Approach 4: All three combined — maximum protection',
+    ],
+    correct: 2,
+    explanation: 'The concern is tamper detection (users modifying data to skip validations), not data confidentiality. HMAC signatures detect any modification to any field — even valid-looking changes like changing a quantity from 5 to 50. It has better performance than SQLCipher (~1-2ms per write vs 5-15% on all operations) and directly addresses the tampering risk. SQLCipher prevents reading but doesn\'t detect modification by someone who has app access.',
+  },
+  {
+    id: 13,
+    question: 'You previously chose Lambda for a workload, but requirements changed and you now need WebSocket support. How do you update the decision?',
+    type: 'multiple',
+    options: [
+      'Edit the Lambda code to add WebSocket support',
+      'Delete .kiro/steering/compute-decision.md and mention "container" or "ECS" in chat to re-trigger the compute-selection skill',
+      'Ask Kiro to ignore the compute-decision.md steering file',
+      'Create a new project — decisions can\'t be changed',
+    ],
+    correct: 1,
+    explanation: 'Skill decisions are stored as steering files. To change a decision: delete the generated file (compute-decision.md) and re-trigger the skill by mentioning keywords. The skill runs the question flow fresh with the new requirements (WebSocket → containers) and creates a new steering file. You can also edit the file directly for small tweaks.',
+  },
+  {
+    id: 14,
+    question: 'What is the key difference between SQLCipher (Approach 2) and HMAC signatures (Approach 3) for offline data protection?',
+    type: 'multiple',
+    options: [
+      'SQLCipher is faster than HMAC',
+      'SQLCipher protects data confidentiality (can\'t read the file), HMAC protects data integrity (can\'t modify without detection)',
+      'HMAC encrypts the database, SQLCipher signs individual records',
+      'They do the same thing — just different implementations',
+    ],
+    correct: 1,
+    explanation: 'SQLCipher encrypts the entire database file (confidentiality — prevents reading). HMAC computes a cryptographic signature per record (integrity — detects modification). They solve different problems. A user with app access has the SQLCipher key (the app needs it to function), so they can still modify data. HMAC catches that modification because the signature won\'t match without the server secret.',
+  },
+  {
+    id: 15,
+    question: 'The offline-security-selection skill asks 8 questions across 3 phases. What are the three phases?',
+    type: 'multiple',
+    options: [
+      'Authentication → Authorization → Encryption',
+      'Data sensitivity → Tamper risk → Performance constraints',
+      'Client security → Server security → Network security',
+      'Encryption → Signing → Validation',
+    ],
+    correct: 1,
+    explanation: 'Phase 1 (data sensitivity) determines if encryption is needed — PII, regulations, or significant harm from exposure. Phase 2 (tamper risk) determines if HMAC signatures are needed — can users benefit from modifying data, what\'s the impact. Phase 3 (performance constraints) checks if the recommended approach is feasible on the target devices — heavy browsing on older devices may rule out SQLCipher.',
+  },
 ]
 
 function KnowledgeCheck() {
@@ -1905,7 +1970,7 @@ function KnowledgeCheck() {
     <div className="kc-container">
       <div className="kc-header">
         <h2>📝 Knowledge Check</h2>
-        <p>Test your understanding of the Kiro Configuration Kit. 10 questions, 70% to pass.</p>
+        <p>Test your understanding of the Kiro Configuration Kit. 15 questions, 70% to pass.</p>
       </div>
 
       <div className="kc-participant-info">
@@ -1939,7 +2004,7 @@ function KnowledgeCheck() {
       </div>
 
       {!submitted ? (
-        <button className="kc-submit" onClick={handleSubmit} disabled={Object.keys(answers).length < total}>
+        <button className="kc-submit" onClick={handleSubmit} disabled={Object.keys(answers).length < total} data-testid="knowledge-check-submit-button">
           Submit ({Object.keys(answers).length}/{total} answered)
         </button>
       ) : (
@@ -1949,8 +2014,8 @@ function KnowledgeCheck() {
           </div>
           {emailSent && <div className="kc-email-sent">✅ Results sent to the workshop administrator.</div>}
           {emailError && <div className="kc-email-error">⚠️ {emailError} — use the PDF export below as backup.</div>}
-          <button className="kc-export" onClick={handleExportPDF}>📄 Export Results as PDF</button>
-          <button className="kc-retry" onClick={() => { setAnswers({}); setSubmitted(false); setEmailSent(false); setEmailError('') }}>🔄 Retry</button>
+          <button className="kc-export" onClick={handleExportPDF} data-testid="knowledge-check-export-button">📄 Export Results as PDF</button>
+          <button className="kc-retry" onClick={() => { setAnswers({}); setSubmitted(false); setEmailSent(false); setEmailError('') }} data-testid="knowledge-check-retry-button">🔄 Retry</button>
         </div>
       )}
     </div>
@@ -1989,6 +2054,7 @@ function WorkshopGuide() {
         <button
           className={`workshop-nav-item ${activePart === 'knowledge-check' ? 'active' : ''}`}
           onClick={() => setActivePart('knowledge-check')}
+          data-testid="workshop-guide-nav-knowledge-check-button"
         >
           <span className="workshop-nav-icon">📝</span>
           <span className="workshop-nav-label">Knowledge Check</span>
