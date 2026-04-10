@@ -1710,8 +1710,14 @@ const workshopParts = [
       { type: 'heading', text: '⭐⭐⭐ Challenge 5: Heavy Report (Report Generation)' },
       { type: 'step', num: 'B5.1', title: 'Build an organization-wide analytics report', prompt: '#report-generation-rules\n\nBuild an analytics dashboard that shows: total entries per user across the entire organization, mood distribution over the last 12 months, most active days of the week, and tag frequency. This will query across all users in the organization (potentially 10,000+ entries). Generate it as a downloadable PDF.', promptExplain: 'This is deliberately a heavy report — multi-table aggregation, 10K+ rows, cross-user data, PDF output. The steering should classify it as heavy and enforce: read replica (not primary DB), async processing with job queue, streaming rows, S3 storage with pre-signed URL, materialized views for frequent queries, and resource limits.' },
       { type: 'observe', text: 'Compare this to Challenge 6 in the main workshop (light CSV export). Kiro should use a completely different architecture: async job, background worker, S3 storage, pre-signed URL, read replica. The contrast demonstrates why the light/heavy classification matters.' },
-      { type: 'heading', text: '⭐⭐⭐ Challenge 6: Create Your Own Steering Rule' },
-      { type: 'step', num: 'B6.1', title: 'Write a custom steering rule', text: 'Create a new steering file at .kiro/steering/api-versioning-rules.md that enforces API versioning standards for the project. Include rules for: URL-based versioning (/v1/entries), backward compatibility requirements, deprecation process, and response headers. Set it to inclusion: manual.' },
+      { type: 'heading', text: '⭐⭐⭐ Challenge 6: Add Authentication with Cognito' },
+      { type: 'step', num: 'B6.1', title: 'Activate auth-rules and add Cognito authentication', prompt: '#auth-rules\n\nAdd AWS Cognito User Pool authentication to the Dev Diary API. Create a get_current_user dependency that validates Cognito JWTs using the JWKS endpoint. Cache the JWKS keys at startup. Use Cognito Groups for roles (admin, editor, viewer). Protect all endpoints — only authenticated users can access their own entries.', promptExplain: 'This activates auth-rules which now includes the Cognito section. The steering enforces: JWKS caching at startup (not per request), RS256 validation, extracting sub and cognito:groups from the token, resource ownership scoping (users only see their own entries), and fail-closed error handling on auth failures.' },
+      { type: 'observe', text: 'Kiro should: cache JWKS at startup, validate with python-jose, extract user_id from sub claim, use cognito:groups for RBAC, scope all queries to the authenticated user, return 401 for invalid tokens and 403 for insufficient permissions.' },
+      { type: 'heading', text: '⭐⭐⭐ Challenge 7: Secrets Management with Parameter Store' },
+      { type: 'step', num: 'B7.1', title: 'Activate secrets-management-rules and move config to Parameter Store', prompt: '#secrets-management-rules\n\nMove all configuration (database URL, Cognito User Pool ID, Cognito App Client ID, API keys) to AWS Parameter Store using the path hierarchy /devdiary/prod/. Load all parameters once at startup using GetParametersByPath. Add an admin-only POST /admin/reload-config endpoint to refresh config without redeployment.', promptExplain: 'This activates secrets-management-rules. The steering enforces: path-based hierarchy, SecureString for secrets, load once at startup with GetParametersByPath, read from memory at runtime (zero per-request API calls), and admin reload endpoint protected by RBAC. The cost stays in free tier since we only call Parameter Store at startup.' },
+      { type: 'observe', text: 'Kiro should: organize parameters under /devdiary/prod/, use SecureString for the database URL, load all params in one API call at startup, store in a config dict, never call Parameter Store at runtime, and protect the reload endpoint with admin permission check.' },
+      { type: 'heading', text: '⭐⭐⭐ Challenge 8: Create Your Own Steering Rule' },
+      { type: 'step', num: 'B8.1', title: 'Write a custom steering rule', text: 'Create a new steering file at .kiro/steering/api-versioning-rules.md that enforces API versioning standards for the project. Include rules for: URL-based versioning (/v1/entries), backward compatibility requirements, deprecation process, and response headers. Set it to inclusion: manual.' },
       { type: 'observe', text: 'This challenge tests whether you understand the steering file format: front matter with inclusion mode, mandatory rules, code examples, and anti-patterns. After creating it, activate it with #api-versioning-rules and ask Kiro to version the entries API.' },
     ],
   },
@@ -1913,6 +1919,45 @@ const knowledgeQuestions = [
     correct: 1,
     explanation: 'Phase 1 (data sensitivity) determines if encryption is needed — PII, regulations, or significant harm from exposure. Phase 2 (tamper risk) determines if HMAC signatures are needed — can users benefit from modifying data, what\'s the impact. Phase 3 (performance constraints) checks if the recommended approach is feasible on the target devices — heavy browsing on older devices may rule out SQLCipher.',
   },
+  {
+    id: 16,
+    question: 'How should your application validate AWS Cognito JWTs according to auth-rules.md?',
+    type: 'multiple',
+    options: [
+      'Call the Cognito API on every request to verify the token',
+      'Cache the JWKS keys at startup, validate locally with RS256, re-fetch JWKS only if key rotation causes a verification failure',
+      'Decode the JWT without verifying the signature — Cognito tokens are always trusted',
+      'Store the Cognito secret key in the application and validate with HS256',
+    ],
+    correct: 1,
+    explanation: 'auth-rules.md mandates caching JWKS at startup and validating locally — never calling Cognito per request. If verification fails with "key not found" (Cognito rotated keys), re-fetch JWKS once and retry. Cognito uses RS256 (asymmetric), not HS256 (symmetric). Never skip signature verification.',
+  },
+  {
+    id: 17,
+    question: 'Your app has 5 configuration parameters in AWS Parameter Store. How should they be loaded according to secrets-management-rules.md?',
+    type: 'multiple',
+    options: [
+      'Call ssm.get_parameter() for each parameter on every API request',
+      'Load all 5 at startup using GetParametersByPath in a single API call, store in a config dict, read from memory at runtime',
+      'Hardcode them in a .env file and commit to git for convenience',
+      'Use Parameter Store Advanced tier for better performance',
+    ],
+    correct: 1,
+    explanation: 'secrets-management-rules.md enforces the load-once pattern: GetParametersByPath fetches all parameters under a path in one API call at startup. The app reads from the in-memory config dict at runtime — zero AWS API calls per request. This keeps costs in the free tier (1 call per deploy vs thousands per day).',
+  },
+  {
+    id: 18,
+    question: 'A secret in Parameter Store was updated but you don\'t want to redeploy the application. How do you refresh it?',
+    type: 'multiple',
+    options: [
+      'You can\'t — Parameter Store values require redeployment to take effect',
+      'Call POST /admin/reload-config (admin-only endpoint) to re-fetch all parameters from Parameter Store into the config dict',
+      'The application automatically detects Parameter Store changes in real-time',
+      'Delete the parameter and recreate it — the app will pick it up',
+    ],
+    correct: 1,
+    explanation: 'secrets-management-rules.md includes an admin reload endpoint (POST /admin/reload-config) protected by RBAC. When called, it re-fetches all parameters from Parameter Store and updates the in-memory config. The app continues serving with old values until the reload completes — no downtime. This is Pattern B (app-level loading).',
+  },
 ]
 
 function KnowledgeCheck() {
@@ -2009,7 +2054,7 @@ function KnowledgeCheck() {
     <div className="kc-container">
       <div className="kc-header">
         <h2>📝 Knowledge Check</h2>
-        <p>Test your understanding of the Kiro Configuration Kit. 15 questions, 70% to pass.</p>
+        <p>Test your understanding of the Kiro Configuration Kit. 18 questions, 70% to pass.</p>
       </div>
 
       <div className="kc-participant-info">
@@ -2431,10 +2476,10 @@ function AuthenticatedApp() {
   return (
     <>
       <nav className="top-nav" data-testid="authenticated-app-top-nav">
-        <button className={page === 'presentation' ? 'nav-active' : ''} onClick={() => setPage('presentation')}>📊 Training</button>
-        <button className={page === 'guide' ? 'nav-active' : ''} onClick={() => setPage('guide')}>📖 Activation Guide</button>
-        <button className={page === 'workshop' ? 'nav-active' : ''} onClick={() => setPage('workshop')}>🛠️ Workshop</button>
-        <button className={page === 'changelog' ? 'nav-active' : ''} onClick={() => setPage('changelog')}>📋 Changelog</button>
+        <button className={page === 'presentation' ? 'nav-active' : ''} onClick={() => setPage('presentation')} data-testid="id_authenticated_app_button_training">📊 Training</button>
+        <button className={page === 'guide' ? 'nav-active' : ''} onClick={() => setPage('guide')} data-testid="id_authenticated_app_button_activation_guide">📖 Activation Guide</button>
+        <button className={page === 'workshop' ? 'nav-active' : ''} onClick={() => setPage('workshop')} data-testid="id_authenticated_app_button_workshop">🛠️ Workshop</button>
+        <button className={page === 'changelog' ? 'nav-active' : ''} onClick={() => setPage('changelog')} data-testid="id_authenticated_app_button_changelog">📋 Changelog</button>
         <span className="nav-version">{APP_VERSION}</span>
       </nav>
       {page === 'presentation' && <App />}
