@@ -119,7 +119,7 @@ const slides = [
         title: 'Steering Rules',
         color: '#8b5cf6',
         desc: 'Always-on, contextual, or opt-in coding standards',
-        items: ['Entity standards (auto)', 'Timezone rules (auto)', 'Testing standards (auto)', 'Query safety (contextual)', 'QA element IDs (contextual)', 'Storage design (contextual)', 'API standards (manual)', 'Auth rules (manual)', 'Concurrency & locking (manual)', 'Report generation (manual)', 'Data upload (manual)', 'Offline sync (manual)', 'Logging (manual)'],
+        items: ['Entity standards (auto)', 'Timezone rules (auto)', 'Testing standards (auto)', 'Query safety (contextual)', 'QA element IDs (contextual)', 'Storage design (contextual)', 'API standards (manual)', 'Auth rules (manual)', 'Secrets management (manual)', 'Concurrency & locking (manual)', 'Report generation (manual)', 'Data upload (manual)', 'Offline sync (manual)', 'Logging (manual)'],
       },
       {
         icon: '🧠',
@@ -164,12 +164,13 @@ const slides = [
       { name: 'QA Element IDs', mode: 'FileMatch', icon: '🏷️', desc: 'data-testid with id_view_type_name convention. Loads on frontend files only' },
       { name: 'Storage Design', mode: 'FileMatch', icon: '💾', desc: 'Schema design, indexing, encryption, backups, table naming. Loads on model/migration files' },
       { name: 'API Standards', mode: 'Manual', icon: '🔌', desc: 'Response format, HTTP status codes, fail-closed error handling, rate limiting. Activate with #api-standards' },
-      { name: 'Auth Rules', mode: 'Manual', icon: '🔑', desc: 'JWT validation, RBAC, resource ownership, password handling. Activate with #auth-rules' },
+      { name: 'Auth Rules', mode: 'Manual', icon: '🔑', desc: 'AWS Cognito User Pool, JWT/JWKS validation, RBAC, resource ownership. Activate with #auth-rules' },
       { name: 'Concurrency & Locking', mode: 'Manual', icon: '🔒', desc: 'Short transactions, lock ordering, optimistic concurrency. Activate with #concurrency-and-locking-rules' },
       { name: 'Report Generation', mode: 'Manual', icon: '📊', desc: 'Light vs heavy classification, read replicas, async generation. Activate with #report-generation-rules' },
       { name: 'Data Upload', mode: 'Manual', icon: '📤', desc: 'Light/heavy classification, staging tables, collision handling, off-peak scheduling' },
       { name: 'Offline Sync', mode: 'Manual', icon: '📡', desc: 'Delta sync, local storage schema, conflict resolution, sync API design' },
       { name: 'Logging', mode: 'Manual', icon: '📝', desc: 'Structured JSON logging, log levels, correlation IDs, PII redaction. Activate with #logging-rules' },
+      { name: 'Secrets Management', mode: 'Manual', icon: '🗝️', desc: 'Parameter Store + load once at startup, admin reload endpoint. Activate with #secrets-management-rules' },
     ],
   },
   {
@@ -1155,10 +1156,21 @@ const steeringGuide = [
     file: 'auth-rules.md',
     mode: 'Manual',
     icon: '🔑',
-    what: 'Enforces JWT validation, role-based access control (RBAC), resource ownership scoping, password handling, and session management.',
+    what: 'Enforces AWS Cognito User Pool as recommended auth provider, JWT/JWKS validation with caching, role-based access control (RBAC) via Cognito Groups, resource ownership scoping, password handling, and session management.',
     when: 'When implementing authentication, authorization, login/logout, or access control for the first time or making changes to auth logic.',
     whenNot: 'When the auth system is already built and you\'re working on features that don\'t touch auth. Entity-standards already handles created_by/modified_by from JWT context.',
     activate: 'Type #auth-rules in the Kiro chat to activate for the current session.',
+    deactivate: 'It deactivates automatically when the session ends. No action needed.',
+  },
+  {
+    name: 'Secrets Management',
+    file: 'secrets-management-rules.md',
+    mode: 'Manual',
+    icon: '🗝️',
+    what: 'Enforces AWS Parameter Store as source of truth for secrets and config. Load once at startup using GetParametersByPath, read from memory at runtime. Supports pipeline injection (existing projects) and app-level loading (new projects). Admin reload endpoint for refresh without redeployment.',
+    when: 'When setting up secrets management, adding new configuration parameters, or migrating from hardcoded secrets to Parameter Store.',
+    whenNot: 'When secrets management is already configured and you\'re writing business logic that just reads from the config object.',
+    activate: 'Type #secrets-management-rules in the Kiro chat to activate for the current session.',
     deactivate: 'It deactivates automatically when the session ends. No action needed.',
   },
   {
@@ -2204,9 +2216,46 @@ function WorkshopGuide() {
   )
 }
 
-const APP_VERSION = 'v0.1.0'
+const APP_VERSION = 'v0.1.1'
 
 const changelogEntries = [
+  {
+    version: '0.1.1',
+    date: 'April 10, 2026',
+    title: 'Auth & Secrets Management',
+    sections: [
+      {
+        heading: 'Auth Rules — AWS Cognito User Pool',
+        items: [
+          'Added Section 1: Recommended AWS Cognito User Pool as auth provider',
+          'Cognito JWKS caching pattern — fetch once at startup, refresh only on key rotation failure',
+          'Cognito Groups for RBAC — map groups to application roles',
+          'Full Python code example with python-jose for RS256 JWT validation',
+          'Multi-tenant guidance: one User Pool per tenant',
+          'Two new anti-patterns: no per-request Cognito API calls, no per-request JWKS fetches',
+        ],
+      },
+      {
+        heading: 'New: Secrets Management Rules',
+        items: [
+          'New manual steering file: secrets-management-rules.md',
+          'AWS Parameter Store as source of truth — path-based hierarchy (/app/env/category/name)',
+          'Load-once pattern: GetParametersByPath at startup, read from memory at runtime — zero per-request API calls',
+          'Two supported patterns: pipeline injection (existing projects) and app-level loading (new projects)',
+          'Admin reload endpoint for refresh without redeployment — POST /admin/reload-config (admin-only)',
+          'Cost guidance: startup-only loading = free, 5-min TTL with batched fetch = free (under 10K calls/month)',
+        ],
+      },
+      {
+        heading: 'Kit Inventory Update',
+        items: [
+          'Total steering files: 14 (3 auto, 3 fileMatch, 8 manual)',
+          'New file: secrets-management-rules.md (manual)',
+          'Updated file: auth-rules.md — expanded from 7 to 9 anti-patterns, added Cognito section',
+        ],
+      },
+    ],
+  },
   {
     version: '0.1.0',
     date: 'April 10, 2026',
