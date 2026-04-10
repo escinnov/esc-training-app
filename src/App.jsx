@@ -67,7 +67,7 @@ const slides = [
     items: [
       { icon: '🎯', text: 'Why codified standards matter' },
       { icon: '🧩', text: 'The Kiro Configuration Kit — hooks, steering, skills' },
-      { icon: '🏛️', text: '6 Pillars of Well-Architected Software' },
+      { icon: '🏛️', text: '5 Pillars of Well-Architected Software' },
       { icon: '🚨', text: 'OWASP Top 10:2025 & How the Kit Addresses Each Risk' },
       { icon: '⚡', text: 'Live walkthrough — how it works in practice' },
       { icon: '🗺️', text: 'Adoption path for your team' },
@@ -119,7 +119,7 @@ const slides = [
         title: 'Steering Rules',
         color: '#8b5cf6',
         desc: 'Always-on, contextual, or opt-in coding standards',
-        items: ['Entity standards (auto)', 'Timezone rules (auto)', 'Testing standards (auto)', 'Query safety (contextual)', 'QA element IDs (contextual)', 'Storage design (contextual)', 'Concurrency & locking (manual)', 'Report generation (manual)', 'Data upload rules (manual)', 'Offline sync rules (manual)'],
+        items: ['Entity standards (auto)', 'Timezone rules (auto)', 'Testing standards (auto)', 'Query safety (contextual)', 'QA element IDs (contextual)', 'Storage design (contextual)', 'API standards (manual)', 'Auth rules (manual)', 'Concurrency & locking (manual)', 'Report generation (manual)', 'Data upload (manual)', 'Offline sync (manual)', 'Logging (manual)'],
       },
       {
         icon: '🧠',
@@ -161,12 +161,15 @@ const slides = [
       { name: 'Timezone Rules', mode: 'Auto', icon: '🕐', desc: 'Store UTC, send with offset, display local. Date-only fields need companion timezone' },
       { name: 'Testing Standards', mode: 'Auto', icon: '🧪', desc: 'AAA pattern, 90% coverage, security tests for handlers, regression tests for fixes' },
       { name: 'Query Safety', mode: 'FileMatch', icon: '🛡️', desc: 'Parameterized queries mandatory, keyword blocklists banned. Loads on handler/service/repo files' },
-      { name: 'QA Element IDs', mode: 'FileMatch', icon: '🏷️', desc: 'data-testid on interactive elements, kebab-case naming. Loads on frontend files only' },
+      { name: 'QA Element IDs', mode: 'FileMatch', icon: '🏷️', desc: 'data-testid with id_view_type_name convention. Loads on frontend files only' },
       { name: 'Storage Design', mode: 'FileMatch', icon: '💾', desc: 'Schema design, indexing, encryption, backups, table naming. Loads on model/migration files' },
+      { name: 'API Standards', mode: 'Manual', icon: '🔌', desc: 'Response format, HTTP status codes, fail-closed error handling, rate limiting. Activate with #api-standards' },
+      { name: 'Auth Rules', mode: 'Manual', icon: '🔑', desc: 'JWT validation, RBAC, resource ownership, password handling. Activate with #auth-rules' },
       { name: 'Concurrency & Locking', mode: 'Manual', icon: '🔒', desc: 'Short transactions, lock ordering, optimistic concurrency. Activate with #concurrency-and-locking-rules' },
       { name: 'Report Generation', mode: 'Manual', icon: '📊', desc: 'Light vs heavy classification, read replicas, async generation. Activate with #report-generation-rules' },
       { name: 'Data Upload', mode: 'Manual', icon: '📤', desc: 'Light/heavy classification, staging tables, collision handling, off-peak scheduling' },
       { name: 'Offline Sync', mode: 'Manual', icon: '📡', desc: 'Delta sync, local storage schema, conflict resolution, sync API design' },
+      { name: 'Logging', mode: 'Manual', icon: '📝', desc: 'Structured JSON logging, log levels, correlation IDs, PII redaction. Activate with #logging-rules' },
     ],
   },
   {
@@ -234,7 +237,7 @@ const slides = [
   {
     id: 'pillars-title',
     type: 'section-break',
-    title: '6 Pillars of Well-Architected Software',
+    title: '5 Pillars of Well-Architected Software',
     subtitle: 'How the Kit maps to each pillar',
   },
   {
@@ -311,18 +314,6 @@ const slides = [
           { text: 'Heavy uploads scheduled for off-peak windows to avoid peak-hour costs', source: 'data-upload-rules.md §8' },
         ],
       },
-      {
-        name: 'Sustainability',
-        icon: '🌱',
-        color: '#10b981',
-        desc: 'Ability to continually improve sustainability impacts by reducing energy consumption and increasing efficiency across all workload components.',
-        mappings: [
-          { text: 'Serverless/managed storage preferred — DynamoDB, Aurora Serverless, S3', source: 'storage-design-rules.md §8' },
-          { text: 'Data retention policies aligned with business and compliance requirements', source: 'storage-design-rules.md §8' },
-          { text: 'Large objects compressed before storing in S3 or document databases', source: 'storage-design-rules.md §8' },
-          { text: 'References/foreign keys over data duplication unless read perf demands it', source: 'storage-design-rules.md §8' },
-        ],
-      },
     ],
   },
   {
@@ -342,6 +333,7 @@ const slides = [
         desc: 'Users acting outside their intended permissions — IDOR, privilege escalation, CORS misconfiguration, tenant data leakage.',
         kitSolutions: [
           { source: 'tenant-strategy skill', fix: 'Guided decision flow forces proper isolation model selection before any code is written — row-level, schema-per-tenant, or stack-per-tenant' },
+          { source: 'auth-rules.md', fix: 'JWT validation, RBAC with centralized permissions, resource ownership scoping — every query scoped to authenticated user' },
           { source: 'entity-standards.md', fix: 'Mandatory created_by/modified_by fields ensure every record is tied to an authenticated user context from JWT claims' },
           { source: 'report-generation-rules.md §6', fix: 'Report queries must respect the same authorization rules as the API — never bypass tenant isolation for reporting' },
           { source: 'security-test-on-handler hook', fix: 'Auto-generates tests for 401 (unauthenticated) and 403 (unauthorized) responses on every handler save' },
@@ -435,6 +427,7 @@ const slides = [
         name: 'Security Logging & Monitoring Failures',
         desc: 'Insufficient logging, no alerting on attack patterns, audit trail gaps, inability to detect breaches.',
         kitSolutions: [
+          { source: 'logging-rules.md', fix: 'Structured JSON logging with correlation IDs, log levels, PII redaction, and retention policies' },
           { source: 'entity-standards.md', fix: 'Mandatory audit fields (created_by, modified_by, deleted_at) on every entity — complete mutation trail' },
           { source: 'storage-design-rules.md §3', fix: 'Audit logging enabled on all storage — pgaudit for RDS, CloudTrail for DynamoDB, access logging for S3' },
           { source: 'report-generation-rules.md §7', fix: 'Every report generation logged with type, requester, parameters, row count, duration, and output size' },
@@ -446,6 +439,7 @@ const slides = [
         name: 'Exceptional Conditions',
         desc: 'Security failures when applications encounter unexpected states — error handlers that fail open, race conditions in security checks.',
         kitSolutions: [
+          { source: 'api-standards.md §3', fix: 'Fail-closed exception handling — exception handlers MUST deny/reject, never allow/proceed. Bare except banned' },
           { source: 'concurrency-and-locking-rules.md §4', fix: 'Retry logic with serialization failure handling — higher isolation levels get explicit retry for SerializationError' },
           { source: 'concurrency-and-locking-rules.md §3', fix: 'FOR UPDATE NOWAIT for user-facing ops — fail fast with ConflictError instead of hanging or failing open' },
           { source: 'concurrency-and-locking-rules.md §1', fix: 'Explicit statement and transaction timeouts prevent runaway locks from cascading into security bypasses' },
@@ -539,7 +533,7 @@ const slides = [
       { icon: '🤖', text: 'Automation over discipline — hooks enforce what humans forget' },
       { icon: '📏', text: 'Standards as code — steering rules are version-controlled and reviewable' },
       { icon: '🧠', text: 'Guided decisions — skills prevent gut-feel architecture choices' },
-      { icon: '🏛️', text: 'Well-Architected by default — every pillar is covered' },
+      { icon: '🏛️', text: 'Well-Architected by default — 5 pillars covered' },
       { icon: '🛡️', text: 'OWASP Top 10 addressed — not by process, but by tooling' },
       { icon: '📈', text: 'Incremental adoption — works for new and existing projects' },
     ],
@@ -1084,7 +1078,7 @@ const steeringGuide = [
     file: 'qa-element-id-rules.md',
     mode: 'FileMatch',
     icon: '🏷️',
-    what: 'Ensures data-testid attributes on all interactive UI elements with consistent kebab-case naming convention.',
+    what: 'Ensures data-testid attributes on all interactive UI elements using id_view_type_name convention in snake_case.',
     when: 'When editing frontend component files — React, Vue, Svelte, or HTML.',
     whenNot: 'When working on backend Python code, database migrations, infrastructure, or documentation.',
     activate: 'Loads automatically when you open/edit files matching: **/*.tsx, **/*.jsx, **/*.vue, **/*.svelte, **/*.html',
@@ -1143,6 +1137,39 @@ const steeringGuide = [
     when: 'When building client applications that must work without network connectivity and sync data when reconnected.',
     whenNot: 'When building server-only features, always-online web apps, or backend services that don\'t have offline requirements.',
     activate: 'Type #offline-sync-rules in the Kiro chat to activate for the current session.',
+    deactivate: 'It deactivates automatically when the session ends. No action needed.',
+  },
+  {
+    name: 'API Standards',
+    file: 'api-standards.md',
+    mode: 'Manual',
+    icon: '🔌',
+    what: 'Enforces response format (JSON envelope), HTTP status codes, fail-closed exception handling (OWASP A10), request validation, and rate limiting.',
+    when: 'When building new API endpoints, error handling middleware, or standardizing response formats across the project.',
+    whenNot: 'When working on frontend code, database models, or infrastructure that doesn\'t involve API design.',
+    activate: 'Type #api-standards in the Kiro chat to activate for the current session.',
+    deactivate: 'It deactivates automatically when the session ends. No action needed.',
+  },
+  {
+    name: 'Auth Rules',
+    file: 'auth-rules.md',
+    mode: 'Manual',
+    icon: '🔑',
+    what: 'Enforces JWT validation, role-based access control (RBAC), resource ownership scoping, password handling, and session management.',
+    when: 'When implementing authentication, authorization, login/logout, or access control for the first time or making changes to auth logic.',
+    whenNot: 'When the auth system is already built and you\'re working on features that don\'t touch auth. Entity-standards already handles created_by/modified_by from JWT context.',
+    activate: 'Type #auth-rules in the Kiro chat to activate for the current session.',
+    deactivate: 'It deactivates automatically when the session ends. No action needed.',
+  },
+  {
+    name: 'Logging Rules',
+    file: 'logging-rules.md',
+    mode: 'Manual',
+    icon: '📝',
+    what: 'Enforces structured JSON logging, log levels, what to log vs never log (PII redaction), correlation IDs for request tracing, and log retention.',
+    when: 'When setting up logging infrastructure, adding observability, or standardizing log output across the project.',
+    whenNot: 'When the logging setup is already in place and you\'re writing business logic that doesn\'t need logging changes.',
+    activate: 'Type #logging-rules in the Kiro chat to activate for the current session.',
     deactivate: 'It deactivates automatically when the session ends. No action needed.',
   },
 ]
@@ -1620,7 +1647,7 @@ const workshopParts = [
       { type: 'observe', text: 'timezone-rules.md converts UTC to local for display. qa-element-id-rules.md loads on .jsx/.tsx files and adds data-testid attributes.' },
       { type: 'step', num: '7.2', title: 'Start the frontend (separate terminal)', code: 'cd frontend\nnpm install\nnpm run dev' },
       { type: 'note', text: 'App at http://localhost:5173. Vite proxies /entries to http://localhost:8000 — no CORS issues.' },
-      { type: 'step', num: '7.3', title: 'Verify data-testid attributes', text: 'Check generated components for: entry-list-create-button, entry-form-title-input, entry-form-content-textarea, entry-form-mood-select, entry-form-submit-button, entry-card-delete-button-{entry.id}' },
+      { type: 'step', num: '7.3', title: 'Verify data-testid attributes', text: 'Check generated components for: id_entry_list_page_button_create, id_entry_form_page_textbox_title, id_entry_form_page_textbox_content, id_entry_form_page_select_mood, id_entry_form_page_button_submit, id_entry_card_button_delete_{entry.id}' },
     ],
   },
   {
@@ -2177,6 +2204,143 @@ function WorkshopGuide() {
   )
 }
 
+const APP_VERSION = 'v0.1.0'
+
+const changelogEntries = [
+  {
+    version: '0.1.0',
+    date: 'April 10, 2026',
+    title: 'Initial Release',
+    sections: [
+      {
+        heading: 'Kit Components',
+        items: [
+          '3 hooks: unit-test-on-edit (v2), security-test-on-handler (v2), qa-element-ids (v2)',
+          '4 skills: compute-selection, storage-selection, tenant-strategy, offline-security-selection',
+          '13 steering rules: 3 auto, 3 fileMatch, 7 manual',
+          'All skills now create persistent steering files after decisions',
+        ],
+      },
+      {
+        heading: 'Steering Rules Added',
+        items: [
+          'entity-standards.md (auto) — audit fields, soft delete, input sanitization',
+          'timezone-rules.md (auto) — UTC storage, TIMESTAMPTZ, date-only field rules',
+          'testing-standards.md (auto) — AAA pattern, 90% coverage, security tests, regression tests',
+          'query-safety-rules.md (fileMatch) — parameterized queries, keyword blocklist ban',
+          'qa-element-id-rules.md (fileMatch) — id_view_type_name convention in snake_case',
+          'storage-design-rules.md (fileMatch) — schema design, indexing, encryption, 5 Well-Architected pillars',
+          'api-standards.md (manual) — response format, HTTP status codes, fail-closed error handling, rate limiting',
+          'auth-rules.md (manual) — JWT validation, RBAC, resource ownership, password handling',
+          'concurrency-and-locking-rules.md (manual) — short transactions, lock ordering, optimistic concurrency',
+          'report-generation-rules.md (manual) — light/heavy classification, read replicas, async generation',
+          'data-upload-rules.md (manual) — light/heavy uploads, staging tables, collision handling',
+          'offline-sync-rules.md (manual) — delta sync, conflict resolution, sync API design',
+          'logging-rules.md (manual) — structured JSON logging, correlation IDs, PII redaction',
+        ],
+      },
+      {
+        heading: 'Credit Optimizations',
+        items: [
+          'Three-tier inclusion system: auto (~250 lines), fileMatch (contextual), manual (opt-in)',
+          'Hooks scoped to specific directories — excludes tests, migrations, config, __init__.py',
+          'Hook prompts reference steering files instead of repeating rules inline (~75% smaller)',
+          'No duplicate hook triggers — unit-test and security-test hooks have separate responsibilities',
+          'Anti-patterns restored to individual bullet points in manual files for scannability',
+        ],
+      },
+      {
+        heading: 'Skill Improvements',
+        items: [
+          'All 4 skills create persistent steering files after making a recommendation',
+          'Generated steering files use fileMatch so decisions load automatically on relevant code',
+          'Review note added: "Review the generated steering file with the team before committing"',
+          'New skill: offline-security-selection (8 questions, 3 phases: data sensitivity → tamper risk → performance)',
+          'offline-sync-rules.md defers to offline-security-selection skill for encryption/tamper decisions — no conflict',
+        ],
+      },
+      {
+        heading: 'QA Element ID Convention',
+        items: [
+          'Changed from {component}-{element}-{descriptor} kebab-case to id_{view}_{type}_{name} snake_case',
+          'View naming uses full module descriptions (store_maintenance, not store_maint)',
+          'Updated all examples, framework snippets, and anti-patterns',
+        ],
+      },
+      {
+        heading: 'Security Additions',
+        items: [
+          'query-safety-rules.md — parameterized queries mandatory, keyword blocklists explicitly banned',
+          'api-standards.md — fail-closed exception handling (OWASP A10:2025), never expose stack traces',
+          'auth-rules.md — JWT validation, RBAC, resource ownership scoping, no JWTs in localStorage',
+          'security-test-on-handler hook — now also verifies parameterized query usage',
+        ],
+      },
+      {
+        heading: 'Training App',
+        items: [
+          'Interactive slide presentation with OWASP Top 10:2025 mapping and Well-Architected alignment',
+          'Activation Guide with installation steps, steering/skills/hooks management',
+          'Workshop module: Dev Diary app build with 9 parts, tech stack explanations, prompt explanations',
+          'Knowledge check: 15 questions with scoring, PDF export, results emailed to admin',
+          'PDF export includes all modules (training slides + activation guide)',
+          'Password-protected site access, name+email registration for workshop',
+        ],
+      },
+      {
+        heading: 'Platform Equivalents',
+        items: [
+          'GitHub Copilot: .github/copilot-instructions.md',
+          'Amazon Q Developer: .amazonq/rules/project-standards.md',
+          'Gemini Code Assist: .gemini/styleguide.md + settings.json',
+          'All three include prerequisite notes on manual sections',
+        ],
+      },
+      {
+        heading: 'Bug Fixes',
+        items: [
+          'Fixed duplicate numbering in storage-design-rules.md Section 1 (two items numbered "3")',
+          'Removed Sustainability section from storage-design-rules.md (generic, covered by Cost Optimization)',
+          'Fixed offline-sync-rules.md encryption instruction conflicting with offline-security-selection skill',
+        ],
+      },
+    ],
+  },
+]
+
+function ChangelogPage() {
+  return (
+    <div className="changelog-page" data-testid="id_changelog_page_container_root">
+      <div className="changelog-content">
+        <div className="changelog-header" data-testid="id_changelog_page_container_header">
+          <h1>📋 Changelog</h1>
+          <span className="changelog-version-badge" data-testid="id_changelog_page_label_version_badge">{APP_VERSION}</span>
+        </div>
+        <p className="changelog-subtitle">All changes to the Kiro Configuration Kit and training materials.</p>
+        {changelogEntries.map((entry, i) => (
+          <div key={i} className="changelog-entry" data-testid={`id_changelog_page_card_entry_${entry.version.replace(/\./g, '_')}`}>
+            <div className="changelog-entry-header">
+              <span className="changelog-entry-version">v{entry.version}</span>
+              <span className="changelog-entry-date">{entry.date}</span>
+              <span className="changelog-entry-title">{entry.title}</span>
+            </div>
+            {entry.sections.map((section, j) => (
+              <div key={j} className="changelog-section" data-testid={`id_changelog_page_container_section_${section.heading.toLowerCase().replace(/\s+/g, '_')}`}>
+                <h3>{section.heading}</h3>
+                <ul>
+                  {section.items.map((item, k) => (
+                    <li key={k}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function AuthenticatedApp() {
   const [authed, setAuthed] = useState(() => sessionStorage.getItem('authenticated') === 'true')
   const [page, setPage] = useState('presentation')
@@ -2218,12 +2382,15 @@ function AuthenticatedApp() {
   return (
     <>
       <nav className="top-nav" data-testid="authenticated-app-top-nav">
-        <button className={page === 'presentation' ? 'nav-active' : ''} onClick={() => setPage('presentation')} data-testid="authenticated-app-nav-training-button">📊 Training</button>
-        <button className={page === 'guide' ? 'nav-active' : ''} onClick={() => setPage('guide')} data-testid="authenticated-app-nav-guide-button">📖 Activation Guide</button>
-        <button className={page === 'workshop' ? 'nav-active' : ''} onClick={() => setPage('workshop')} data-testid="authenticated-app-nav-workshop-button">🛠️ Workshop</button>
+        <button className={page === 'presentation' ? 'nav-active' : ''} onClick={() => setPage('presentation')}>📊 Training</button>
+        <button className={page === 'guide' ? 'nav-active' : ''} onClick={() => setPage('guide')}>📖 Activation Guide</button>
+        <button className={page === 'workshop' ? 'nav-active' : ''} onClick={() => setPage('workshop')}>🛠️ Workshop</button>
+        <button className={page === 'changelog' ? 'nav-active' : ''} onClick={() => setPage('changelog')}>📋 Changelog</button>
+        <span className="nav-version">{APP_VERSION}</span>
       </nav>
       {page === 'presentation' && <App />}
       {page === 'guide' && <ActivationGuide />}
+      {page === 'changelog' && <ChangelogPage />}
       {page === 'workshop' && (
         workshopAuthed
           ? <WorkshopGuide />

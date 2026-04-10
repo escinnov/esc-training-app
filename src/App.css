@@ -1585,3 +1585,132 @@ h2 {
   background: rgba(245, 158, 11, 0.1);
   border-radius: 6px;
 }
+
+/* Version badge in nav */
+.nav-version {
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: #475569;
+  padding: 0.3rem 0.7rem;
+  background: #0f172a;
+  border-radius: 10px;
+  align-self: center;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+/* Changelog page */
+.changelog-page {
+  width: 100%;
+  height: calc(100vh - 40px);
+  overflow-y: auto;
+  background: #0f172a;
+  padding: 2rem 3rem;
+}
+
+.changelog-content {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.changelog-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.3rem;
+}
+
+.changelog-header h1 {
+  font-size: 1.8rem;
+  color: #f1f5f9;
+  margin: 0;
+}
+
+.changelog-version-badge {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: #3b82f6;
+  color: white;
+  padding: 0.2rem 0.7rem;
+  border-radius: 10px;
+}
+
+.changelog-subtitle {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin-bottom: 2rem;
+}
+
+.changelog-entry {
+  margin-bottom: 2rem;
+}
+
+.changelog-entry-header {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid #334155;
+}
+
+.changelog-entry-version {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+  background: #1e3a5f;
+  color: #60a5fa;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+}
+
+.changelog-entry-date {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.changelog-entry-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.changelog-section {
+  margin-bottom: 1rem;
+}
+
+.changelog-section h3 {
+  font-size: 0.9rem;
+  color: #94a3b8;
+  margin-bottom: 0.4rem;
+  font-weight: 600;
+}
+
+.changelog-section ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.changelog-section li {
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  padding: 0.3rem 0.6rem 0.3rem 1.2rem;
+  position: relative;
+  line-height: 1.4;
+  background: #1e293b;
+  border-radius: 4px;
+}
+
+.changelog-section li::before {
+  content: '•';
+  position: absolute;
+  left: 0.5rem;
+  color: #3b82f6;
+}
+
+@media print {
+  .changelog-page { height: auto; overflow: visible; }
+}

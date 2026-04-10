@@ -9,7 +9,7 @@
 
 - We'll start with why codified standards matter — the problem we're solving.
 - Then walk through the three components of the kit: hooks, steering rules, and skills.
-- Map everything to the 6 pillars of the Well-Architected Framework.
+- Map everything to the 5 pillars of the Well-Architected Framework.
 - Cover 10 real SDLC issues we've all seen and how the kit prevents each one.
 - End with a practical adoption path — how to start using this tomorrow.
 
@@ -63,9 +63,9 @@
 - Right side (now): skills create steering files, decisions load automatically, new team members get them enforced, decisions are version-controlled and code-reviewed.
 - Key message: architectural decisions are now treated like code — versioned, reviewed, and enforced automatically.
 
-## Slide 8: Section Break — 6 Pillars
+## Slide 8: Section Break — 5 Pillars
 
-- Transition: now let's map everything we've seen to the Well-Architected Framework. This isn't just about code quality — it's about building systems that are operationally excellent, secure, reliable, performant, cost-optimized, and sustainable.
+- Transition: now let's map everything we've seen to the Well-Architected Framework. This isn't just about code quality — it's about building systems that are operationally excellent, secure, reliable, performant, and cost-optimized.
 
 ## Slide 9: Well-Architected Alignment
 
@@ -78,7 +78,7 @@
   - Cost Optimization (5 points): Compute right-sizing from the compute-selection skill. S3 tiering. TTL on ephemeral data. On-demand vs provisioned. Off-peak scheduling from data-upload-rules §8.
   - Sustainability (4 points): Serverless-first. Retention policies. Compression. Minimize duplication — all from storage-design-rules §8.
 - Key message: every compliance point traces back to a specific section in a specific file. This isn't aspirational — it's enforced. The source references let anyone verify or customize the rules.
-- Total: 33 compliance points across 6 pillars, all enforced by the kit's steering rules, hooks, and skills.
+- Total: compliance points across 5 pillars, all enforced by the kit's steering rules, hooks, and skills. Sustainability was removed — its advice was too generic and already covered by Cost Optimization.
 
 ## Slide 10: Section Break — OWASP Top 10
 
@@ -142,7 +142,7 @@
   1. Automation over discipline — hooks do what humans forget.
   2. Standards as code — steering rules are reviewable, versionable, evolvable.
   3. Guided decisions — skills prevent gut-feel architecture.
-  4. Well-Architected by default — all 6 pillars covered.
+  4. Well-Architected by default — all 5 pillars covered.
   5. 10 SDLC issues prevented — by tooling, not process.
   6. Incremental adoption — works for new and existing projects.
 
