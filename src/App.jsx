@@ -2268,9 +2268,41 @@ function WorkshopGuide() {
   )
 }
 
-const APP_VERSION = 'v0.1.1'
+const APP_VERSION = 'v0.1.2'
 
 const changelogEntries = [
+  {
+    version: '0.1.2',
+    date: 'April 15, 2026',
+    title: 'Agents Guide & Workshop Challenge',
+    sections: [
+      {
+        heading: 'New: Agents Guide Tab',
+        items: [
+          'Added 🤖 Agents tab with interactive guide to all three agent types (IDE, Sub-Agents, Autonomous)',
+          'Credit costs table with per-action breakdown',
+          '6 credit efficiency tips',
+          'Sub-agent workflow visualization showing sequential task delegation',
+          'What to review carefully section for security-critical code',
+        ],
+      },
+      {
+        heading: 'Workshop: Challenge 9 — Sub-Agent Delegation',
+        items: [
+          'New bonus challenge: create a search feature spec and watch sub-agents execute tasks',
+          'Observe orchestrator → spec-task-execution delegation in real-time',
+          'Compare credit cost of spec workflow vs ad-hoc chat for the same feature',
+        ],
+      },
+      {
+        heading: 'UI Changes',
+        items: [
+          'Moved Changelog tab to the end of the navigation bar',
+          'Tab order: Training → Activation Guide → Workshop → Agents → Changelog',
+        ],
+      },
+    ],
+  },
   {
     version: '0.1.1',
     date: 'April 10, 2026',
@@ -2509,7 +2541,7 @@ function AgentsGuide() {
           <p className="guide-section-desc">Kiro has three layers of agent capability. Click each to see details.</p>
           <div className="guide-list">
             {agentTypes.map((agent, i) => (
-              <div key={i} className={`guide-item ${expandedAgent === i ? 'open' : ''}`} onClick={() => setExpandedAgent(expandedAgent === i ? null : i)}>
+              <div key={i} className={`guide-item ${expandedAgent === i ? 'open' : ''}`} onClick={() => setExpandedAgent(expandedAgent === i ? null : i)} data-testid={`id_agents_guide_accordion_${agent.name.toLowerCase().replace(/[\s-]+/g, '_')}`}>
                 <div className="guide-item-header">
                   <span className="guide-item-icon">{agent.icon}</span>
                   <span className="guide-item-name">{agent.name}</span>
@@ -2537,13 +2569,13 @@ function AgentsGuide() {
 
         <section className="guide-section">
           <h2>Credit Costs</h2>
-          <div className="agents-table">
+          <div className="agents-table" data-testid="id_agents_guide_table_credit_costs">
             <div className="agents-table-header">
               <span>Action</span>
               <span>Credits</span>
             </div>
             {creditTable.map((row, i) => (
-              <div key={i} className="agents-table-row">
+              <div key={i} className="agents-table-row" data-testid={`id_agents_guide_row_${row.action.toLowerCase().replace(/[\s()]+/g, '_').replace(/[^a-z0-9_]/g, '')}`}>
                 <span>{row.action}</span>
                 <span className="agents-credit-value">{row.credits}</span>
               </div>
@@ -2649,8 +2681,8 @@ function AuthenticatedApp() {
         <button className={page === 'presentation' ? 'nav-active' : ''} onClick={() => setPage('presentation')} data-testid="id_authenticated_app_button_training">📊 Training</button>
         <button className={page === 'guide' ? 'nav-active' : ''} onClick={() => setPage('guide')} data-testid="id_authenticated_app_button_activation_guide">📖 Activation Guide</button>
         <button className={page === 'workshop' ? 'nav-active' : ''} onClick={() => setPage('workshop')} data-testid="id_authenticated_app_button_workshop">🛠️ Workshop</button>
-        <button className={page === 'changelog' ? 'nav-active' : ''} onClick={() => setPage('changelog')} data-testid="id_authenticated_app_button_changelog">📋 Changelog</button>
         <button className={page === 'agents' ? 'nav-active' : ''} onClick={() => setPage('agents')}>🤖 Agents</button>
+        <button className={page === 'changelog' ? 'nav-active' : ''} onClick={() => setPage('changelog')} data-testid="id_authenticated_app_button_changelog">📋 Changelog</button>
         <span className="nav-version">{APP_VERSION}</span>
       </nav>
       {page === 'presentation' && <App />}
