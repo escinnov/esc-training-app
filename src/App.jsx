@@ -1720,6 +1720,7 @@ const workshopParts = [
       { type: 'step', num: 'B8.1', title: 'Write a custom steering rule', text: 'Create a new steering file at .kiro/steering/api-versioning-rules.md that enforces API versioning standards for the project. Include rules for: URL-based versioning (/v1/entries), backward compatibility requirements, deprecation process, and response headers. Set it to inclusion: manual.' },
       { type: 'observe', text: 'This challenge tests whether you understand the steering file format: front matter with inclusion mode, mandatory rules, code examples, and anti-patterns. After creating it, activate it with #api-versioning-rules and ask Kiro to version the entries API.' },
       { type: 'heading', text: '⭐⭐ Challenge 9: Experience Sub-Agent Delegation' },
+      { type: 'note', text: 'Before starting this challenge, read the 🤖 Agents tab in the top navigation. It explains the three agent types (IDE, Sub-Agents, Autonomous), how sub-agents work during spec execution, and credit costs per action.' },
       { type: 'intro', text: 'This challenge lets you see how Kiro\'s spec workflow delegates tasks to sub-agents. You\'ll create a small spec, watch the orchestrator break it into tasks, and observe credit consumption.' },
       { type: 'step', num: 'B9.1', title: 'Create a spec for a search feature', prompt: 'I want to add a search feature to the Dev Diary. Users should be able to search entries by title, content, and tags. The search should be case-insensitive and support partial matches.', promptExplain: 'This triggers the spec workflow. Kiro will walk you through requirements → design → tasks. Watch how it creates structured documents before writing any code. The spec creation itself costs 3-5 credits.' },
       { type: 'observe', text: 'Watch the Kiro panel — you\'ll see the spec phases: requirements (user stories), design (technical approach), and tasks (implementation steps). Each phase is a sub-agent invocation.' },
@@ -2681,7 +2682,7 @@ function AuthenticatedApp() {
         <button className={page === 'presentation' ? 'nav-active' : ''} onClick={() => setPage('presentation')} data-testid="id_authenticated_app_button_training">📊 Training</button>
         <button className={page === 'guide' ? 'nav-active' : ''} onClick={() => setPage('guide')} data-testid="id_authenticated_app_button_activation_guide">📖 Activation Guide</button>
         <button className={page === 'workshop' ? 'nav-active' : ''} onClick={() => setPage('workshop')} data-testid="id_authenticated_app_button_workshop">🛠️ Workshop</button>
-        <button className={page === 'agents' ? 'nav-active' : ''} onClick={() => setPage('agents')}>🤖 Agents</button>
+        <button className={page === 'agents' ? 'nav-active' : ''} onClick={() => setPage('agents')} data-testid="id_authenticated_app_button_agents">🤖 Agents</button>
         <button className={page === 'changelog' ? 'nav-active' : ''} onClick={() => setPage('changelog')} data-testid="id_authenticated_app_button_changelog">📋 Changelog</button>
         <span className="nav-version">{APP_VERSION}</span>
       </nav>
