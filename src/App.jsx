@@ -1719,6 +1719,13 @@ const workshopParts = [
       { type: 'heading', text: '⭐⭐⭐ Challenge 8: Create Your Own Steering Rule' },
       { type: 'step', num: 'B8.1', title: 'Write a custom steering rule', text: 'Create a new steering file at .kiro/steering/api-versioning-rules.md that enforces API versioning standards for the project. Include rules for: URL-based versioning (/v1/entries), backward compatibility requirements, deprecation process, and response headers. Set it to inclusion: manual.' },
       { type: 'observe', text: 'This challenge tests whether you understand the steering file format: front matter with inclusion mode, mandatory rules, code examples, and anti-patterns. After creating it, activate it with #api-versioning-rules and ask Kiro to version the entries API.' },
+      { type: 'heading', text: '⭐⭐ Challenge 9: Experience Sub-Agent Delegation' },
+      { type: 'intro', text: 'This challenge lets you see how Kiro\'s spec workflow delegates tasks to sub-agents. You\'ll create a small spec, watch the orchestrator break it into tasks, and observe credit consumption.' },
+      { type: 'step', num: 'B9.1', title: 'Create a spec for a search feature', prompt: 'I want to add a search feature to the Dev Diary. Users should be able to search entries by title, content, and tags. The search should be case-insensitive and support partial matches.', promptExplain: 'This triggers the spec workflow. Kiro will walk you through requirements → design → tasks. Watch how it creates structured documents before writing any code. The spec creation itself costs 3-5 credits.' },
+      { type: 'observe', text: 'Watch the Kiro panel — you\'ll see the spec phases: requirements (user stories), design (technical approach), and tasks (implementation steps). Each phase is a sub-agent invocation.' },
+      { type: 'step', num: 'B9.2', title: 'Execute the spec tasks', text: 'Click "Run All Tasks" in the tasks.md file. Watch the orchestrator delegate each task to the spec-task-execution sub-agent sequentially.' },
+      { type: 'observe', text: 'Key things to notice: tasks run one at a time (not parallel), each task shows "in progress" then "completed", hooks fire on generated files (unit tests, security tests), and the total credit cost is roughly 1 per task + coordination overhead.' },
+      { type: 'step', num: 'B9.3', title: 'Compare: spec vs chat', text: 'Count the total credits used for the spec workflow. Then estimate how many chat messages it would have taken to build the same feature ad-hoc. The spec is usually cheaper for features with 5+ files because it plans before coding.' },
     ],
   },
 ]
@@ -2435,6 +2442,169 @@ function ChangelogPage() {
   )
 }
 
+const agentTypes = [
+  {
+    name: 'IDE Agent',
+    icon: '💬',
+    where: 'Local (your machine)',
+    parallel: 'Sequential',
+    context: 'Session only',
+    cost: '1 credit/interaction',
+    desc: 'The main agent you interact with in chat. Responds to messages, executes hooks, reads steering files, activates skills, writes code.',
+    bestFor: ['Quick fixes and single-file changes', 'Daily coding with hooks active', 'Activating skills for architecture decisions', 'Ad-hoc questions about the codebase'],
+  },
+  {
+    name: 'Sub-Agents',
+    icon: '🔄',
+    where: 'Local (delegated by orchestrator)',
+    parallel: 'Sequential (one at a time)',
+    context: 'Shared session',
+    cost: '1+ credit/invocation',
+    desc: 'Specialized agents invoked by the orchestrator during spec workflows. Includes spec-task-execution, context-gatherer, and workflow agents.',
+    bestFor: ['Spec-driven development (requirements → design → tasks)', 'Multi-file feature implementation', 'Exploring unfamiliar codebases (context-gatherer)', 'Structured, trackable task execution'],
+  },
+  {
+    name: 'Autonomous Agent',
+    icon: '🤖',
+    where: 'Cloud (isolated sandbox)',
+    parallel: 'Up to 10 concurrent tasks',
+    context: 'Persistent across sessions',
+    cost: 'Included in Pro/Pro+/Power (preview)',
+    desc: 'Runs independently in the cloud. Maintains context, works across repos, learns from code reviews, opens PRs. Currently in preview.',
+    bestFor: ['Bulk updates across multiple repositories', 'Tasks you want to delegate and review later', 'Applying consistent patterns learned from code reviews', 'Long-running tasks that would block your IDE'],
+  },
+]
+
+const creditTable = [
+  { action: 'Chat message', credits: '1' },
+  { action: 'Hook trigger (file save)', credits: '1' },
+  { action: 'Save handler file (2 hooks fire)', credits: '2' },
+  { action: 'Skill question flow', credits: '1-3' },
+  { action: 'Create a spec (req + design + tasks)', credits: '3-5' },
+  { action: 'Execute spec with 10 tasks', credits: '10-15' },
+  { action: 'Full workshop (Dev Diary)', credits: '19-25' },
+  { action: 'Activate manual steering', credits: '0' },
+]
+
+const creditTips = [
+  { tip: 'Disable hooks during bulk refactors', detail: '20 file saves = 20 credits. Disable, refactor, re-enable, save once.' },
+  { tip: 'Use specs for multi-file features', detail: 'One spec (10-15 credits) is cheaper than 20 individual chat messages.' },
+  { tip: 'Be specific in chat', detail: 'Vague prompts cause clarifying questions = more round trips = more credits.' },
+  { tip: 'Use Autopilot for routine tasks', detail: 'Supervised mode uses credits for each approval cycle.' },
+  { tip: 'Batch your questions', detail: 'Combine related questions into one message instead of 5 separate ones.' },
+  { tip: 'Use context-gatherer for large codebases', detail: 'One sub-agent call to find files is cheaper than reading 10 files in chat.' },
+]
+
+function AgentsGuide() {
+  const [expandedAgent, setExpandedAgent] = useState(null)
+
+  return (
+    <div className="guide-page">
+      <div className="guide-content">
+        <h1 className="guide-title">🤖 Kiro Agents Guide</h1>
+        <p className="guide-subtitle">Understanding agent types, sub-agent delegation, credit costs, and efficiency tips.</p>
+
+        <section className="guide-section">
+          <h2>Agent Types</h2>
+          <p className="guide-section-desc">Kiro has three layers of agent capability. Click each to see details.</p>
+          <div className="guide-list">
+            {agentTypes.map((agent, i) => (
+              <div key={i} className={`guide-item ${expandedAgent === i ? 'open' : ''}`} onClick={() => setExpandedAgent(expandedAgent === i ? null : i)}>
+                <div className="guide-item-header">
+                  <span className="guide-item-icon">{agent.icon}</span>
+                  <span className="guide-item-name">{agent.name}</span>
+                  <span className="guide-item-toggle">{expandedAgent === i ? '▲' : '▼'}</span>
+                </div>
+                <p className="guide-item-what">{agent.desc}</p>
+                {expandedAgent === i && (
+                  <div className="guide-item-details">
+                    <div className="guide-detail"><span className="guide-label">Runs:</span> {agent.where}</div>
+                    <div className="guide-detail"><span className="guide-label">Parallelism:</span> {agent.parallel}</div>
+                    <div className="guide-detail"><span className="guide-label">Context:</span> {agent.context}</div>
+                    <div className="guide-detail"><span className="guide-label">Cost:</span> {agent.cost}</div>
+                    <div className="guide-detail guide-when">
+                      <span className="guide-label">Best for:</span>
+                      <ul style={{margin:'0.3rem 0 0 1rem',padding:0}}>
+                        {agent.bestFor.map((item, j) => <li key={j} style={{fontSize:'0.8rem',color:'#94a3b8',marginBottom:'0.2rem'}}>{item}</li>)}
+                      </ul>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="guide-section">
+          <h2>Credit Costs</h2>
+          <div className="agents-table">
+            <div className="agents-table-header">
+              <span>Action</span>
+              <span>Credits</span>
+            </div>
+            {creditTable.map((row, i) => (
+              <div key={i} className="agents-table-row">
+                <span>{row.action}</span>
+                <span className="agents-credit-value">{row.credits}</span>
+              </div>
+            ))}
+          </div>
+          <div className="agents-pricing-note">
+            Plans: Free (50 credits) · Pro $20/mo (1,000) · Pro+ $40/mo (2,000) · Power $200/mo (10,000) · Overage: $0.04/credit
+          </div>
+        </section>
+
+        <section className="guide-section">
+          <h2>Credit Efficiency Tips</h2>
+          <div className="guide-list">
+            {creditTips.map((tip, i) => (
+              <div key={i} className="agents-tip">
+                <span className="agents-tip-title">{tip.tip}</span>
+                <span className="agents-tip-detail">{tip.detail}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="guide-section">
+          <h2>Sub-Agent Workflow (Spec Execution)</h2>
+          <div className="agents-flow">
+            <div className="agents-flow-step">
+              <span className="agents-flow-label">Orchestrator</span>
+              <span className="agents-flow-desc">Reads tasks.md, queues all tasks</span>
+            </div>
+            <div className="agents-flow-arrow">↓</div>
+            <div className="agents-flow-step">
+              <span className="agents-flow-label">Task 1 → spec-task-execution</span>
+              <span className="agents-flow-desc">Sub-agent writes code, runs tests, returns result</span>
+            </div>
+            <div className="agents-flow-arrow">↓</div>
+            <div className="agents-flow-step">
+              <span className="agents-flow-label">Task 2 → spec-task-execution</span>
+              <span className="agents-flow-desc">Next sub-agent invocation (sequential, not parallel)</span>
+            </div>
+            <div className="agents-flow-arrow">↓</div>
+            <div className="agents-flow-step">
+              <span className="agents-flow-label">... until all tasks complete</span>
+              <span className="agents-flow-desc">Each task: 1+ credit. Total: ~10-15 for a 10-task spec</span>
+            </div>
+          </div>
+        </section>
+
+        <section className="guide-section">
+          <h2>What to Review Carefully</h2>
+          <div className="guide-list">
+            <div className="agents-review-item">Generated steering files from skills — validate before committing</div>
+            <div className="agents-review-item">Security-critical code — hooks generate tests but don't guarantee coverage</div>
+            <div className="agents-review-item">Database migrations — always review before running in production</div>
+            <div className="agents-review-item">Code handling money, PII, or authentication</div>
+          </div>
+        </section>
+      </div>
+    </div>
+  )
+}
+
 function AuthenticatedApp() {
   const [authed, setAuthed] = useState(() => sessionStorage.getItem('authenticated') === 'true')
   const [page, setPage] = useState('presentation')
@@ -2480,11 +2650,13 @@ function AuthenticatedApp() {
         <button className={page === 'guide' ? 'nav-active' : ''} onClick={() => setPage('guide')} data-testid="id_authenticated_app_button_activation_guide">📖 Activation Guide</button>
         <button className={page === 'workshop' ? 'nav-active' : ''} onClick={() => setPage('workshop')} data-testid="id_authenticated_app_button_workshop">🛠️ Workshop</button>
         <button className={page === 'changelog' ? 'nav-active' : ''} onClick={() => setPage('changelog')} data-testid="id_authenticated_app_button_changelog">📋 Changelog</button>
+        <button className={page === 'agents' ? 'nav-active' : ''} onClick={() => setPage('agents')}>🤖 Agents</button>
         <span className="nav-version">{APP_VERSION}</span>
       </nav>
       {page === 'presentation' && <App />}
       {page === 'guide' && <ActivationGuide />}
       {page === 'changelog' && <ChangelogPage />}
+      {page === 'agents' && <AgentsGuide />}
       {page === 'workshop' && (
         workshopAuthed
           ? <WorkshopGuide />

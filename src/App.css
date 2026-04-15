@@ -1714,3 +1714,115 @@ h2 {
 @media print {
   .changelog-page { height: auto; overflow: visible; }
 }
+
+/* Agents guide */
+.agents-table {
+  background: #1e293b;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 0.8rem;
+}
+
+.agents-table-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.6rem 1rem;
+  background: #334155;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.agents-table-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  border-top: 1px solid #2d3748;
+}
+
+.agents-credit-value {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  color: #60a5fa;
+  font-weight: 600;
+}
+
+.agents-pricing-note {
+  font-size: 0.75rem;
+  color: #64748b;
+  text-align: center;
+  padding: 0.5rem;
+}
+
+.agents-tip {
+  background: #1e293b;
+  border-radius: 6px;
+  padding: 0.6rem 0.8rem;
+  margin-bottom: 0.4rem;
+  border-left: 3px solid #22c55e;
+}
+
+.agents-tip-title {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin-bottom: 0.2rem;
+}
+
+.agents-tip-detail {
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+
+.agents-flow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.agents-flow-step {
+  background: #1e293b;
+  border-radius: 8px;
+  padding: 0.7rem 1.2rem;
+  width: 100%;
+  max-width: 500px;
+  border-left: 3px solid #3b82f6;
+}
+
+.agents-flow-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #60a5fa;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+.agents-flow-desc {
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+
+.agents-flow-arrow {
+  font-size: 1.2rem;
+  color: #475569;
+  padding: 0.2rem 0;
+}
+
+.agents-review-item {
+  font-size: 0.82rem;
+  color: #fcd34d;
+  padding: 0.5rem 0.8rem;
+  background: rgba(245, 158, 11, 0.06);
+  border-left: 3px solid #f59e0b;
+  border-radius: 0 6px 6px 0;
+  margin-bottom: 0.4rem;
+}
+
+@media print {
+  .agents-table-header { background: #f1f5f9; color: #1e293b; }
+  .agents-table-row { color: #475569; border-top-color: #e2e8f0; }
+  .agents-table { background: #f8fafc; border: 1px solid #e2e8f0; }
+}
