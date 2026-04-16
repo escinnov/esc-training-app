@@ -1790,6 +1790,8 @@ const workshopParts = [
         hint: 'Think about the Spec button workflow — it creates documents before any code is written. Check the 🤖 Agents tab for details.',
         solution: 'The three spec phases (in order):\n\n1. Requirements → produces requirements.md\n   • User stories, acceptance criteria, edge cases\n   • Defines WHAT the feature should do\n\n2. Design → produces design.md\n   • Technical approach, data models, API contracts\n   • Defines HOW the feature will be built\n\n3. Tasks → produces tasks.md\n   • Implementation steps, ordered by dependency\n   • Each task is a discrete unit of work for a sub-agent\n\nWhy plan before coding:\n• Catches design flaws before any code is written (cheaper to fix)\n• Creates a shared understanding that can be reviewed by the team\n• Enables structured delegation — each task has clear scope\n• Prevents the "spaghetti implementation" problem where code is written without a plan\n• The spec documents become living documentation for the feature',
         solutionExplain: 'The spec workflow mirrors how senior engineers work: understand requirements → design the solution → break into tasks → implement. Each phase is a sub-agent invocation that costs 1-2 credits. The total spec creation (all 3 phases) costs 3-5 credits.',
+        prompt: 'I want to add a search feature to the Dev Diary. Users should be able to search entries by title, content, and tags. The search should be case-insensitive and support partial matches.',
+        promptExplain: 'Paste this into a new Spec (click the Spec button, not chat). Watch the Kiro panel as it creates requirements.md → design.md → tasks.md in sequence. Each phase is a separate sub-agent invocation. Read the generated documents before running any tasks — this is the planning phase you just described.',
       },
       {
         type: 'challenge',
@@ -1800,6 +1802,8 @@ const workshopParts = [
         hint: 'Think about the orchestrator → sub-agent delegation flow and what hooks are configured in the kit.',
         solution: '1. Tasks run sequentially (one at a time)\n   • The orchestrator queues all tasks and runs them in order\n   • Each task must complete before the next starts\n   • This ensures later tasks can build on earlier ones\n\n2. Each task is executed by the spec-task-execution sub-agent\n   • The orchestrator delegates to this specialized sub-agent\n   • The sub-agent writes code, runs tests, and returns results\n   • Each invocation costs 1+ credits\n\n3. When a handler file is generated during task 3:\n   • The unit-test-on-edit hook fires → generates unit tests\n   • The security-test-on-handler hook fires → generates security tests\n   • Both hooks fire BEFORE task 4 starts\n   • This means task 4 already has test coverage from task 3\'s code\n   • Each hook trigger costs 1 credit (so 2 extra credits for a handler file)',
         solutionExplain: 'Sequential execution is important because tasks often depend on each other (e.g., task 4 might import a module created in task 3). Hooks firing between tasks is a key benefit — it means every generated file gets tests automatically, even during spec execution.',
+        prompt: 'Open the tasks.md file from the spec you created in Challenge 9a. Click "Run All Tasks" and watch the Kiro agent panel. Pay attention to:\n\n1. The task status changing: pending → in_progress → completed\n2. Hook triggers appearing between tasks (unit-test, security-test)\n3. The sequential order — task N+1 only starts after task N completes\n\nAfter all tasks finish, check the generated files. Look for test files that were created by hooks, not by the spec tasks themselves.',
+        promptExplain: 'This is a hands-on observation prompt — don\'t paste it into chat. Instead, follow the instructions in the Kiro IDE. The goal is to see the orchestrator → spec-task-execution → hook trigger chain in real-time. Count the total agent invocations: tasks + hook triggers.',
       },
       {
         type: 'challenge',
@@ -1810,6 +1814,8 @@ const workshopParts = [
         hint: 'A spec costs 3-5 credits to create + ~1 per task. A chat message costs 1 credit. But think about how many chat messages you\'d actually need for 7 files.',
         solution: 'Option A — Spec workflow:\n• Create spec (requirements + design + tasks): 3-5 credits\n• Execute ~7-8 tasks: 7-8 credits\n• Hook triggers on handler/frontend files: ~3-4 credits\n• Total: ~13-17 credits\n\nOption B — Ad-hoc chat:\n• "Create the search model": 1 credit\n• "Create the search service": 1 credit\n• "Create the search handler": 1 credit\n• "Add the API route": 1 credit\n• "Create the frontend component": 1 credit\n• Hook triggers: ~3-4 credits\n• Clarifying questions / fixing issues: 3-5 credits\n• "Wait, the service doesn\'t match the handler": 1-2 credits\n• "The tests are failing, fix them": 1-2 credits\n• Total: ~13-18 credits\n\nVerdict: Similar cost, but the spec is MORE RELIABLE because:\n• It plans before coding → fewer fix-it-later messages\n• Tasks have clear scope → less back-and-forth\n• Design document catches integration issues upfront\n• For features with 5+ files, specs break even or save credits\n• For features with 10+ files, specs are significantly cheaper',
         solutionExplain: 'The breakeven point is roughly 5 files. Below that, chat is simpler and equally cheap. Above that, the upfront planning cost of a spec pays for itself by reducing rework and clarification messages. The key insight: specs are cheaper not because individual tasks cost less, but because planning reduces wasted credits on fixes.',
+        prompt: 'Now try building the same search feature using ad-hoc chat (no spec). Send these messages one at a time and count your credits:\n\n1. "Add a search_entries function to the service layer that searches by title, content, and tags using case-insensitive ILIKE queries with SQLAlchemy"\n2. "Create a GET /entries/search?q=term handler that calls the search service and returns paginated results"\n3. "Add a search bar component to the frontend that calls the search API with debounced input"\n\nCompare: How many total credits did this take vs the spec approach? Did you need any follow-up messages to fix integration issues?',
+        promptExplain: 'This is the ad-hoc comparison experiment. By building the same feature both ways (spec in 9a/9b, chat here), you can directly compare credit costs, code quality, and how much rework was needed. The chat approach is faster to start but often needs more fix-it messages.',
       },
     ],
   },
@@ -2262,6 +2268,12 @@ function ChallengeCard({ item, copiedIdx, copyToClipboard, globalIdx }) {
                   {copiedIdx === `challenge-${item.id}` ? '✓ Copied' : 'Copy'}
                 </button>
               </div>
+              {item.promptExplain && (
+                <div className="workshop-prompt-explain">
+                  <span className="workshop-prompt-explain-label">🧠 Why this prompt:</span>
+                  <span>{item.promptExplain}</span>
+                </div>
+              )}
             </div>
           )}
           <button className="challenge-retry-btn" onClick={() => { setRevealed(false); setAnswer(''); setShowHint(false) }} data-testid={`challenge-retry-btn-${item.id}`}>
@@ -2431,9 +2443,26 @@ function WorkshopGuide() {
   )
 }
 
-const APP_VERSION = 'v0.1.4'
+const APP_VERSION = 'v0.1.5'
 
 const changelogEntries = [
+  {
+    version: '0.1.5',
+    date: 'April 16, 2026',
+    title: 'Challenge 9 — Hands-On Agent Prompts',
+    sections: [
+      {
+        heading: 'Workshop: Agent Prompts for Challenge 9',
+        items: [
+          'Challenge 9a: Added Kiro Spec prompt to create a search feature and observe the 3-phase spec workflow in action',
+          'Challenge 9b: Added observation guide for watching task execution, hook triggers between tasks, and sequential delegation',
+          'Challenge 9c: Added ad-hoc chat prompts to build the same feature without a spec for direct cost comparison',
+          'Each prompt includes a "Why this prompt" explanation describing what to watch for in the agent panel',
+          'ChallengeCard component now renders promptExplain field in the solution area',
+        ],
+      },
+    ],
+  },
   {
     version: '0.1.4',
     date: 'April 16, 2026',
