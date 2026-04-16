@@ -1781,14 +1781,36 @@ const workshopParts = [
         solution: 'Front matter:\n---\ninclusion: manual\n---\n\nWhy manual: API versioning is only relevant when designing or modifying API endpoints. Auto-inclusion would waste context on every interaction. Activated with #api-versioning-rules.\n\nSections to include:\n1. URL-based versioning: All endpoints prefixed with /v1/, /v2/, etc.\n2. Backward compatibility: New versions must support all previous version\'s fields. Deprecated fields return values but are marked in docs.\n3. Deprecation process: Announce deprecation in response headers (Deprecation: true, Sunset: date). Minimum 6-month sunset period.\n4. Response headers: Include API-Version header in all responses.\n5. Code examples: Show versioned route registration, version negotiation middleware.\n6. Anti-patterns:\n   • ❌ Query parameter versioning (?version=2)\n   • ❌ Header-based versioning (Accept: application/vnd.api.v2+json) — harder to test\n   • ❌ Breaking changes without version bump\n   • ❌ Removing fields from existing version',
         solutionExplain: 'This challenge tests understanding of the steering file format. The key decisions are: manual inclusion (not auto) because it\'s situational, URL-based versioning (most discoverable), and including anti-patterns to prevent common mistakes. After creating it, activate with #api-versioning-rules in chat.',
       },
-      { type: 'heading', text: '⭐⭐ Challenge 9: Experience Sub-Agent Delegation' },
-      { type: 'note', text: 'Before starting this challenge, read the 🤖 Agents tab in the top navigation. It explains the three agent types (IDE, Sub-Agents, Autonomous), how sub-agents work during spec execution, and credit costs per action.' },
-      { type: 'intro', text: 'This challenge lets you see how Kiro\'s spec workflow delegates tasks to sub-agents. You\'ll create a small spec, watch the orchestrator break it into tasks, and observe credit consumption.' },
-      { type: 'step', num: 'B9.1', title: 'Create a spec for a search feature', prompt: 'I want to add a search feature to the Dev Diary. Users should be able to search entries by title, content, and tags. The search should be case-insensitive and support partial matches.', promptExplain: 'This triggers the spec workflow. Kiro will walk you through requirements → design → tasks. Watch how it creates structured documents before writing any code. The spec creation itself costs 3-5 credits.' },
-      { type: 'observe', text: 'Watch the Kiro panel — you\'ll see the spec phases: requirements (user stories), design (technical approach), and tasks (implementation steps). Each phase is a sub-agent invocation.' },
-      { type: 'step', num: 'B9.2', title: 'Execute the spec tasks', text: 'Click "Run All Tasks" in the tasks.md file. Watch the orchestrator delegate each task to the spec-task-execution sub-agent sequentially.' },
-      { type: 'observe', text: 'Key things to notice: tasks run one at a time (not parallel), each task shows "in progress" then "completed", hooks fire on generated files (unit tests, security tests), and the total credit cost is roughly 1 per task + coordination overhead.' },
-      { type: 'step', num: 'B9.3', title: 'Compare: spec vs chat', text: 'Count the total credits used for the spec workflow. Then estimate how many chat messages it would have taken to build the same feature ad-hoc. The spec is usually cheaper for features with 5+ files because it plans before coding.' },
+      {
+        type: 'challenge',
+        id: 'c9a',
+        difficulty: '⭐⭐',
+        title: 'Challenge 9a: Spec Workflow — Phases & Order',
+        question: 'When you ask Kiro to build a search feature using the Spec workflow, it goes through structured phases before writing any code. (1) What are the three phases of a spec, and in what order do they run? (2) What does each phase produce? (3) Why does Kiro plan before coding instead of jumping straight to implementation?',
+        hint: 'Think about the Spec button workflow — it creates documents before any code is written. Check the 🤖 Agents tab for details.',
+        solution: 'The three spec phases (in order):\n\n1. Requirements → produces requirements.md\n   • User stories, acceptance criteria, edge cases\n   • Defines WHAT the feature should do\n\n2. Design → produces design.md\n   • Technical approach, data models, API contracts\n   • Defines HOW the feature will be built\n\n3. Tasks → produces tasks.md\n   • Implementation steps, ordered by dependency\n   • Each task is a discrete unit of work for a sub-agent\n\nWhy plan before coding:\n• Catches design flaws before any code is written (cheaper to fix)\n• Creates a shared understanding that can be reviewed by the team\n• Enables structured delegation — each task has clear scope\n• Prevents the "spaghetti implementation" problem where code is written without a plan\n• The spec documents become living documentation for the feature',
+        solutionExplain: 'The spec workflow mirrors how senior engineers work: understand requirements → design the solution → break into tasks → implement. Each phase is a sub-agent invocation that costs 1-2 credits. The total spec creation (all 3 phases) costs 3-5 credits.',
+      },
+      {
+        type: 'challenge',
+        id: 'c9b',
+        difficulty: '⭐⭐',
+        title: 'Challenge 9b: Sub-Agent Execution — How Tasks Run',
+        question: 'After a spec is created with 8 tasks, you click "Run All Tasks". (1) Do the tasks run in parallel or sequentially? (2) What agent type executes each task? (3) If a handler file is generated during task 3, what happens automatically before task 4 starts?',
+        hint: 'Think about the orchestrator → sub-agent delegation flow and what hooks are configured in the kit.',
+        solution: '1. Tasks run sequentially (one at a time)\n   • The orchestrator queues all tasks and runs them in order\n   • Each task must complete before the next starts\n   • This ensures later tasks can build on earlier ones\n\n2. Each task is executed by the spec-task-execution sub-agent\n   • The orchestrator delegates to this specialized sub-agent\n   • The sub-agent writes code, runs tests, and returns results\n   • Each invocation costs 1+ credits\n\n3. When a handler file is generated during task 3:\n   • The unit-test-on-edit hook fires → generates unit tests\n   • The security-test-on-handler hook fires → generates security tests\n   • Both hooks fire BEFORE task 4 starts\n   • This means task 4 already has test coverage from task 3\'s code\n   • Each hook trigger costs 1 credit (so 2 extra credits for a handler file)',
+        solutionExplain: 'Sequential execution is important because tasks often depend on each other (e.g., task 4 might import a module created in task 3). Hooks firing between tasks is a key benefit — it means every generated file gets tests automatically, even during spec execution.',
+      },
+      {
+        type: 'challenge',
+        id: 'c9c',
+        difficulty: '⭐⭐',
+        title: 'Challenge 9c: Credit Cost — Spec vs Chat',
+        question: 'You need to build a search feature that touches 7 files (model, handler, service, 2 test files, frontend component, API route). Compare the credit cost of: (A) Using a spec workflow, and (B) Building it ad-hoc through individual chat messages. Which is cheaper and why? Show your math.',
+        hint: 'A spec costs 3-5 credits to create + ~1 per task. A chat message costs 1 credit. But think about how many chat messages you\'d actually need for 7 files.',
+        solution: 'Option A — Spec workflow:\n• Create spec (requirements + design + tasks): 3-5 credits\n• Execute ~7-8 tasks: 7-8 credits\n• Hook triggers on handler/frontend files: ~3-4 credits\n• Total: ~13-17 credits\n\nOption B — Ad-hoc chat:\n• "Create the search model": 1 credit\n• "Create the search service": 1 credit\n• "Create the search handler": 1 credit\n• "Add the API route": 1 credit\n• "Create the frontend component": 1 credit\n• Hook triggers: ~3-4 credits\n• Clarifying questions / fixing issues: 3-5 credits\n• "Wait, the service doesn\'t match the handler": 1-2 credits\n• "The tests are failing, fix them": 1-2 credits\n• Total: ~13-18 credits\n\nVerdict: Similar cost, but the spec is MORE RELIABLE because:\n• It plans before coding → fewer fix-it-later messages\n• Tasks have clear scope → less back-and-forth\n• Design document catches integration issues upfront\n• For features with 5+ files, specs break even or save credits\n• For features with 10+ files, specs are significantly cheaper',
+        solutionExplain: 'The breakeven point is roughly 5 files. Below that, chat is simpler and equally cheap. Above that, the upfront planning cost of a spec pays for itself by reducing rework and clarification messages. The key insight: specs are cheaper not because individual tasks cost less, but because planning reduces wasted credits on fixes.',
+      },
     ],
   },
 ]
@@ -2409,9 +2431,27 @@ function WorkshopGuide() {
   )
 }
 
-const APP_VERSION = 'v0.1.3'
+const APP_VERSION = 'v0.1.4'
 
 const changelogEntries = [
+  {
+    version: '0.1.4',
+    date: 'April 16, 2026',
+    title: 'Interactive Challenge 9 — Sub-Agent Delegation',
+    sections: [
+      {
+        heading: 'Workshop: Challenge 9 Now Interactive',
+        items: [
+          'Challenge 9 split into 3 focused interactive sub-challenges (9a, 9b, 9c)',
+          '9a: Spec workflow phases — tests understanding of requirements → design → tasks flow',
+          '9b: Sub-agent execution — tests knowledge of sequential task delegation and hook triggers between tasks',
+          '9c: Credit cost comparison — spec vs ad-hoc chat with math breakdown',
+          'All 3 sub-challenges use the same answer-then-reveal format as challenges 1–8',
+          'No more passive "observe" instructions — users must demonstrate understanding before seeing solutions',
+        ],
+      },
+    ],
+  },
   {
     version: '0.1.3',
     date: 'April 16, 2026',
