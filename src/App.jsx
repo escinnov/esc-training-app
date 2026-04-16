@@ -1693,32 +1693,94 @@ const workshopParts = [
     icon: '🏆',
     duration: null,
     content: [
-      { type: 'intro', text: 'Finished early? These challenges go deeper into the kit. Each one exercises a different manual steering rule or skill that wasn\'t covered in the main workshop.' },
-      { type: 'heading', text: '⭐ Challenge 1: CSV Import (Data Upload Rules)' },
-      { type: 'step', num: 'B1.1', title: 'Activate data-upload-rules and build an import', prompt: '#data-upload-rules\n\nBuild a CSV import feature for diary entries. Users upload a CSV file with columns: title, content, mood, tags. The system should validate each row, reject invalid rows with error details, and import valid rows. Classify this as a light upload.', promptExplain: 'This activates the manual data-upload-rules steering. The "classify as light upload" instruction tells Kiro to process synchronously in a single transaction. The steering will enforce: row-level validation, same sanitization as API input, collect all errors (not fail on first), and return a complete error report.' },
-      { type: 'observe', text: 'Kiro should: validate file type by magic bytes (not extension), validate headers, apply entity-standards sanitization to every row, parse dates per timezone-rules, and use atomic transaction for the batch.' },
-      { type: 'heading', text: '⭐⭐ Challenge 2: Team Diary (Tenant Strategy)' },
-      { type: 'step', num: 'B2.1', title: 'Trigger the tenant-strategy skill', prompt: 'I want to turn the Dev Diary into a team product where multiple organizations can use it. Each organization should only see their own data. We expect 10-50 organizations.', promptExplain: 'Mentioning "multiple organizations" and "only see their own data" triggers the tenant-strategy skill. The skill will ask about customer count, isolation needs, compliance, and auth policies. For 10-50 orgs with no special compliance, expect schema-per-tenant recommendation.' },
-      { type: 'observe', text: 'The skill should ask 5 questions and recommend an isolation model. For this scenario, schema-per-tenant is the likely recommendation — separate schemas in the same database, good balance of isolation and cost.' },
-      { type: 'step', num: 'B2.2', title: 'Implement tenant isolation', prompt: 'Implement schema-per-tenant isolation for the Dev Diary. Each organization gets its own database schema. The API should resolve the tenant from the JWT token and connect to the correct schema. Make sure report queries and cache keys include tenant context.', promptExplain: 'This tests whether Kiro applies tenant scoping from multiple steering rules: storage-design-rules (schema naming), report-generation-rules (tenant in cache keys), and entity-standards (created_by from tenant-scoped JWT).' },
-      { type: 'heading', text: '⭐⭐ Challenge 3: Background Processing (Compute Selection)' },
-      { type: 'step', num: 'B3.1', title: 'Trigger the compute-selection skill', prompt: 'I need to add a feature that sends a daily email summary of diary entries to each user. It runs once a day at 8 AM, processes all users, and takes about 2 minutes. Should I use Lambda or a container?', promptExplain: 'This triggers the compute-selection skill. The 7 questions will cover: workload type (scheduled job), execution time (2 min), memory (light), traffic (once daily), scale-to-zero (yes), special requirements (none), existing container (no). Expect Lambda + EventBridge scheduler recommendation.' },
-      { type: 'observe', text: 'The skill should recommend Lambda with a scheduler (EventBridge). Execution under 15 min + scheduled + scale-to-zero = Lambda is the right fit. Cost estimate: ~$0.01/month for a daily 2-minute job.' },
-      { type: 'heading', text: '⭐⭐⭐ Challenge 4: Offline Diary (Offline Sync)' },
-      { type: 'step', num: 'B4.1', title: 'Design the offline sync protocol', prompt: '#offline-sync-rules\n\nDesign an offline sync protocol for a mobile version of the Dev Diary. Users should be able to create and edit entries while offline, then sync when they reconnect. Use last-write-wins for conflict resolution since entries are single-user.', promptExplain: 'This activates offline-sync-rules (manual). The steering will enforce: delta sync (not full), pull-before-push, version column for conflict detection, local SQLite storage with sync_status metadata, batch endpoints, and idempotent sync. The "last-write-wins" instruction tells Kiro which conflict resolution strategy to use.' },
-      { type: 'observe', text: 'Kiro should design: sync manifest (which entities to sync), local schema with sync_status/last_synced_at/local_version columns, pull-then-push flow, batch endpoints, and exponential backoff for retries.' },
-      { type: 'heading', text: '⭐⭐⭐ Challenge 5: Heavy Report (Report Generation)' },
-      { type: 'step', num: 'B5.1', title: 'Build an organization-wide analytics report', prompt: '#report-generation-rules\n\nBuild an analytics dashboard that shows: total entries per user across the entire organization, mood distribution over the last 12 months, most active days of the week, and tag frequency. This will query across all users in the organization (potentially 10,000+ entries). Generate it as a downloadable PDF.', promptExplain: 'This is deliberately a heavy report — multi-table aggregation, 10K+ rows, cross-user data, PDF output. The steering should classify it as heavy and enforce: read replica (not primary DB), async processing with job queue, streaming rows, S3 storage with pre-signed URL, materialized views for frequent queries, and resource limits.' },
-      { type: 'observe', text: 'Compare this to Challenge 6 in the main workshop (light CSV export). Kiro should use a completely different architecture: async job, background worker, S3 storage, pre-signed URL, read replica. The contrast demonstrates why the light/heavy classification matters.' },
-      { type: 'heading', text: '⭐⭐⭐ Challenge 6: Add Authentication with Cognito' },
-      { type: 'step', num: 'B6.1', title: 'Activate auth-rules and add Cognito authentication', prompt: '#auth-rules\n\nAdd AWS Cognito User Pool authentication to the Dev Diary API. Create a get_current_user dependency that validates Cognito JWTs using the JWKS endpoint. Cache the JWKS keys at startup. Use Cognito Groups for roles (admin, editor, viewer). Protect all endpoints — only authenticated users can access their own entries.', promptExplain: 'This activates auth-rules which now includes the Cognito section. The steering enforces: JWKS caching at startup (not per request), RS256 validation, extracting sub and cognito:groups from the token, resource ownership scoping (users only see their own entries), and fail-closed error handling on auth failures.' },
-      { type: 'observe', text: 'Kiro should: cache JWKS at startup, validate with python-jose, extract user_id from sub claim, use cognito:groups for RBAC, scope all queries to the authenticated user, return 401 for invalid tokens and 403 for insufficient permissions.' },
-      { type: 'heading', text: '⭐⭐⭐ Challenge 7: Secrets Management with Parameter Store' },
-      { type: 'step', num: 'B7.1', title: 'Activate secrets-management-rules and move config to Parameter Store', prompt: '#secrets-management-rules\n\nMove all configuration (database URL, Cognito User Pool ID, Cognito App Client ID, API keys) to AWS Parameter Store using the path hierarchy /devdiary/prod/. Load all parameters once at startup using GetParametersByPath. Add an admin-only POST /admin/reload-config endpoint to refresh config without redeployment.', promptExplain: 'This activates secrets-management-rules. The steering enforces: path-based hierarchy, SecureString for secrets, load once at startup with GetParametersByPath, read from memory at runtime (zero per-request API calls), and admin reload endpoint protected by RBAC. The cost stays in free tier since we only call Parameter Store at startup.' },
-      { type: 'observe', text: 'Kiro should: organize parameters under /devdiary/prod/, use SecureString for the database URL, load all params in one API call at startup, store in a config dict, never call Parameter Store at runtime, and protect the reload endpoint with admin permission check.' },
-      { type: 'heading', text: '⭐⭐⭐ Challenge 8: Create Your Own Steering Rule' },
-      { type: 'step', num: 'B8.1', title: 'Write a custom steering rule', text: 'Create a new steering file at .kiro/steering/api-versioning-rules.md that enforces API versioning standards for the project. Include rules for: URL-based versioning (/v1/entries), backward compatibility requirements, deprecation process, and response headers. Set it to inclusion: manual.' },
-      { type: 'observe', text: 'This challenge tests whether you understand the steering file format: front matter with inclusion mode, mandatory rules, code examples, and anti-patterns. After creating it, activate it with #api-versioning-rules and ask Kiro to version the entries API.' },
+      { type: 'intro', text: 'Finished early? These challenges go deeper into the kit. Each one exercises a different manual steering rule or skill that wasn\'t covered in the main workshop. Write your answer first, then reveal the solution to compare.' },
+      {
+        type: 'challenge',
+        id: 'c1',
+        difficulty: '⭐',
+        title: 'Challenge 1: CSV Import (Data Upload Rules)',
+        question: 'You need to build a CSV import feature for diary entries (columns: title, content, mood, tags). Using the data-upload-rules steering, describe: (1) How should the upload be classified (light or heavy)? (2) What validation steps should be applied to each row? (3) How should errors be handled — fail on first error or collect all?',
+        hint: 'Think about the data-upload-rules steering and how entity-standards sanitization applies to bulk imports.',
+        solution: 'Classification: Light upload — single user, small file, synchronous processing in one transaction.\n\nValidation steps per row:\n• Validate file type by magic bytes (not file extension)\n• Validate CSV headers match expected columns\n• Apply entity-standards sanitization to every string field (strip < > & " \' characters)\n• Enforce Field(min_length, max_length) constraints\n• Parse dates per timezone-rules (UTC with Z suffix)\n• Validate mood is from allowed values\n\nError handling: Collect ALL errors (not fail on first). Return a complete error report showing which rows failed and why. Valid rows are imported in an atomic transaction — if the transaction fails, nothing is imported.',
+        solutionExplain: 'The data-upload-rules steering enforces row-level validation with the same sanitization as API input. The key insight is that bulk imports must not bypass the security rules that apply to individual API requests. Collecting all errors (instead of failing on first) gives users a complete picture of what needs fixing.',
+        prompt: '#data-upload-rules\n\nBuild a CSV import feature for diary entries. Users upload a CSV file with columns: title, content, mood, tags. The system should validate each row, reject invalid rows with error details, and import valid rows. Classify this as a light upload.',
+      },
+      {
+        type: 'challenge',
+        id: 'c2',
+        difficulty: '⭐⭐',
+        title: 'Challenge 2: Team Diary (Tenant Strategy)',
+        question: 'You want to turn the Dev Diary into a team product where 10-50 organizations can use it, each seeing only their own data. Which tenant isolation model would the tenant-strategy skill recommend, and why? What are the alternatives and why are they less suitable?',
+        hint: 'Consider the number of organizations, compliance requirements, and cost trade-offs between row-level, schema-per-tenant, and stack-per-tenant.',
+        solution: 'Recommended model: Schema-per-tenant — each organization gets its own database schema within the same database instance.\n\nWhy schema-per-tenant:\n• 10-50 orgs is too many for stack-per-tenant (separate infrastructure per tenant = expensive)\n• Row-level isolation (shared tables with tenant_id column) is simpler but riskier — one missing WHERE clause leaks data across tenants\n• Schema-per-tenant provides strong isolation without the cost of separate databases\n• Schemas can be backed up and restored independently\n\nAlternatives:\n• Row-level: Cheapest but highest risk of data leakage. Suitable for <10 tenants with no compliance needs\n• Database-per-tenant: Stronger isolation but more expensive. Better for regulated industries\n• Stack-per-tenant: Complete isolation but 10-50x infrastructure cost. Only for strict compliance (HIPAA, FedRAMP)\n\nImplementation: API resolves tenant from JWT token → connects to correct schema. Report queries and cache keys must include tenant context.',
+        solutionExplain: 'The tenant-strategy skill asks 5 questions covering customer count, isolation needs, compliance, and auth policies. For 10-50 orgs with no special compliance requirements, schema-per-tenant is the sweet spot — it balances isolation strength with operational cost.',
+        prompt: 'I want to turn the Dev Diary into a team product where multiple organizations can use it. Each organization should only see their own data. We expect 10-50 organizations.',
+      },
+      {
+        type: 'challenge',
+        id: 'c3',
+        difficulty: '⭐⭐',
+        title: 'Challenge 3: Background Processing (Compute Selection)',
+        question: 'You need a feature that sends a daily email summary of diary entries to each user. It runs once a day at 8 AM, processes all users, and takes about 2 minutes. Should you use Lambda or a container (ECS/Fargate)? Justify your answer with at least 3 reasons.',
+        hint: 'Think about execution time, traffic pattern, scale-to-zero needs, and cost.',
+        solution: 'Recommendation: Lambda with EventBridge Scheduler.\n\nReasons:\n1. Execution time (2 min) is well under Lambda\'s 15-minute limit\n2. Runs once daily — scale-to-zero means you pay nothing between executions\n3. Scheduled job pattern is a perfect fit for EventBridge + Lambda\n4. No special requirements (no WebSockets, no GPU, no persistent connections)\n5. No existing container infrastructure to leverage\n6. Memory requirements are light (processing text, not media)\n7. Cost estimate: ~$0.01/month for a daily 2-minute job vs $10+/month for an always-running container\n\nWhen containers would be better:\n• Execution > 15 minutes\n• WebSocket or long-lived connections needed\n• GPU processing required\n• Already running ECS cluster (marginal cost is lower)',
+        solutionExplain: 'The compute-selection skill asks 7 questions covering workload type, execution time, memory, traffic pattern, scale-to-zero, special requirements, and existing infrastructure. This scenario hits every Lambda-favorable criterion.',
+        prompt: 'I need to add a feature that sends a daily email summary of diary entries to each user. It runs once a day at 8 AM, processes all users, and takes about 2 minutes. Should I use Lambda or a container?',
+      },
+      {
+        type: 'challenge',
+        id: 'c4',
+        difficulty: '⭐⭐⭐',
+        title: 'Challenge 4: Offline Diary (Offline Sync)',
+        question: 'Design the key components of an offline sync protocol for a mobile Dev Diary. Specifically: (1) What sync strategy should be used (full sync or delta)? (2) What metadata columns are needed in the local database? (3) What is the correct order of operations when reconnecting?',
+        hint: 'Think about the offline-sync-rules steering — delta sync, pull-before-push, and version columns.',
+        solution: '1. Sync strategy: Delta sync (not full sync)\n• Only sync records changed since last sync (using modified_date > last_synced_at)\n• Full sync wastes bandwidth and battery on mobile devices\n\n2. Local database metadata columns:\n• sync_status: pending | synced | conflict\n• last_synced_at: timestamp of last successful sync\n• local_version: incremented on each local edit\n• server_version: version from the server (for conflict detection)\n• is_local_only: boolean for records created offline\n\n3. Reconnection order (pull-before-push):\n① Pull: GET /sync/pull?since={last_synced_at} — fetch server changes first\n② Apply: Merge server changes into local DB, detect conflicts\n③ Resolve: Apply conflict resolution (last-write-wins for single-user entries)\n④ Push: POST /sync/push — send local changes to server in a batch\n⑤ Confirm: Update last_synced_at and sync_status on success\n⑥ Retry: Exponential backoff on failure (1s, 2s, 4s, 8s...)\n\nAll sync endpoints must be idempotent — retrying a failed push must not create duplicates.',
+        solutionExplain: 'The offline-sync-rules steering enforces delta sync (not full), pull-before-push ordering, version columns for conflict detection, local SQLite storage with sync metadata, batch endpoints, and idempotent operations. Pull-before-push prevents the client from overwriting server changes it hasn\'t seen yet.',
+        prompt: '#offline-sync-rules\n\nDesign an offline sync protocol for a mobile version of the Dev Diary. Users should be able to create and edit entries while offline, then sync when they reconnect. Use last-write-wins for conflict resolution since entries are single-user.',
+      },
+      {
+        type: 'challenge',
+        id: 'c5',
+        difficulty: '⭐⭐⭐',
+        title: 'Challenge 5: Heavy Report (Report Generation)',
+        question: 'You need to build an analytics report showing: total entries per user across the organization, mood distribution over 12 months, most active days, and tag frequency (10,000+ entries, PDF output). How should this be classified (light or heavy)? Describe the architecture differences from a simple CSV export of a user\'s own entries.',
+        hint: 'Think about report-generation-rules — light vs heavy classification, read replicas, async processing.',
+        solution: 'Classification: Heavy report — multi-table aggregation, 10K+ rows, cross-user data, PDF output.\n\nArchitecture for heavy report:\n• Query source: Read replica (never the primary database)\n• Processing: Async — submit job to queue, return job ID immediately\n• Worker: Background worker processes the job, streams rows to avoid memory spikes\n• Storage: Generate PDF → upload to S3 → return pre-signed URL\n• Caching: Materialized views for frequently-run aggregations\n• Limits: Row limit, timeout, max PDF size\n• Monitoring: Log type, requester, duration, row count\n\nContrast with light CSV export (user\'s own entries):\n• Query source: Primary database (small dataset)\n• Processing: Synchronous — query and return in same request\n• No background worker needed\n• No S3 storage — stream CSV directly in response\n• No materialized views — simple query is fast enough\n• Pagination: Keyset pagination for the query\n\nThe key difference: light reports are user-scoped (<10K rows, <5s), heavy reports are org-scoped (unbounded rows, minutes to generate).',
+        solutionExplain: 'The report-generation-rules steering classifies reports as light or heavy based on scope, row count, and execution time. The architecture is completely different for each — this is why the classification matters. Using a light architecture for a heavy report would block the API, consume primary DB resources, and potentially timeout.',
+        prompt: '#report-generation-rules\n\nBuild an analytics dashboard that shows: total entries per user across the entire organization, mood distribution over the last 12 months, most active days of the week, and tag frequency. This will query across all users in the organization (potentially 10,000+ entries). Generate it as a downloadable PDF.',
+      },
+      {
+        type: 'challenge',
+        id: 'c6',
+        difficulty: '⭐⭐⭐',
+        title: 'Challenge 6: Authentication with Cognito',
+        question: 'Describe how to implement AWS Cognito JWT validation according to auth-rules.md. Specifically: (1) How should JWKS keys be loaded? (2) What algorithm is used? (3) How should roles be extracted? (4) What happens when a token is invalid?',
+        hint: 'Think about JWKS caching, RS256 vs HS256, Cognito Groups, and fail-closed error handling.',
+        solution: '1. JWKS key loading:\n• Cache JWKS keys at application startup (one HTTP call to Cognito\'s /.well-known/jwks.json)\n• Store keys in memory — never fetch per request\n• If verification fails with "key not found" (Cognito rotated keys), re-fetch JWKS once and retry\n• If still fails after re-fetch, reject the token\n\n2. Algorithm: RS256 (asymmetric)\n• Cognito uses RSA public/private key pairs\n• Never HS256 (symmetric) — Cognito doesn\'t use shared secrets\n• Use python-jose library for validation\n\n3. Role extraction:\n• User ID: from the "sub" claim in the JWT\n• Roles: from the "cognito:groups" claim (array of group names)\n• Map Cognito Groups to app roles: admin, editor, viewer\n• Resource ownership: scope all queries to authenticated user\'s sub\n\n4. Invalid token handling (fail-closed):\n• Invalid/expired token → 401 Unauthorized (never 200 with error message)\n• Valid token but insufficient permissions → 403 Forbidden\n• Exception during validation → 401 (fail-closed, never fail-open)\n• Never expose the reason for rejection in detail (prevents token probing)',
+        solutionExplain: 'auth-rules.md mandates JWKS caching at startup to avoid per-request latency and Cognito API costs. The fail-closed principle (OWASP A10) means any exception during auth must deny access, never allow it. This prevents edge cases where a malformed token could bypass validation.',
+        prompt: '#auth-rules\n\nAdd AWS Cognito User Pool authentication to the Dev Diary API. Create a get_current_user dependency that validates Cognito JWTs using the JWKS endpoint. Cache the JWKS keys at startup. Use Cognito Groups for roles (admin, editor, viewer). Protect all endpoints — only authenticated users can access their own entries.',
+      },
+      {
+        type: 'challenge',
+        id: 'c7',
+        difficulty: '⭐⭐⭐',
+        title: 'Challenge 7: Secrets Management with Parameter Store',
+        question: 'According to secrets-management-rules, describe: (1) How should parameters be organized in Parameter Store? (2) When should the app call the Parameter Store API? (3) How can config be refreshed without redeployment?',
+        hint: 'Think about path hierarchy, the load-once pattern, and the admin reload endpoint.',
+        solution: '1. Parameter organization:\n• Path hierarchy: /appname/environment/category/name\n• Example: /devdiary/prod/database/url, /devdiary/prod/cognito/user_pool_id\n• Use SecureString type for secrets (database URL, API keys)\n• Use String type for non-sensitive config (feature flags, pool sizes)\n\n2. When to call Parameter Store API:\n• Once at application startup using GetParametersByPath("/devdiary/prod/")\n• This fetches ALL parameters under the path in a single API call\n• Store in an in-memory config dict\n• Read from memory at runtime — zero AWS API calls per request\n• Cost: stays in free tier (1 call per deploy vs thousands per day)\n\n3. Refresh without redeployment:\n• Admin-only endpoint: POST /admin/reload-config\n• Protected by RBAC (only admin role can call it)\n• When called: re-fetches all parameters from Parameter Store\n• Updates the in-memory config dict\n• App continues serving with old values until reload completes — no downtime\n• This is Pattern B (app-level loading) from the steering rules',
+        solutionExplain: 'The secrets-management-rules steering enforces the load-once pattern to minimize AWS API costs and latency. The admin reload endpoint provides a way to update config without redeployment — useful for rotating secrets or toggling feature flags in production.',
+        prompt: '#secrets-management-rules\n\nMove all configuration (database URL, Cognito User Pool ID, Cognito App Client ID, API keys) to AWS Parameter Store using the path hierarchy /devdiary/prod/. Load all parameters once at startup using GetParametersByPath. Add an admin-only POST /admin/reload-config endpoint to refresh config without redeployment.',
+      },
+      {
+        type: 'challenge',
+        id: 'c8',
+        difficulty: '⭐⭐⭐',
+        title: 'Challenge 8: Create Your Own Steering Rule',
+        question: 'Describe the structure of a custom steering file for API versioning rules. What front matter fields are needed? What sections should it include? What inclusion mode would you use and why?',
+        hint: 'Look at how existing steering files are structured — front matter with inclusion mode, mandatory rules, code examples, and anti-patterns.',
+        solution: 'Front matter:\n---\ninclusion: manual\n---\n\nWhy manual: API versioning is only relevant when designing or modifying API endpoints. Auto-inclusion would waste context on every interaction. Activated with #api-versioning-rules.\n\nSections to include:\n1. URL-based versioning: All endpoints prefixed with /v1/, /v2/, etc.\n2. Backward compatibility: New versions must support all previous version\'s fields. Deprecated fields return values but are marked in docs.\n3. Deprecation process: Announce deprecation in response headers (Deprecation: true, Sunset: date). Minimum 6-month sunset period.\n4. Response headers: Include API-Version header in all responses.\n5. Code examples: Show versioned route registration, version negotiation middleware.\n6. Anti-patterns:\n   • ❌ Query parameter versioning (?version=2)\n   • ❌ Header-based versioning (Accept: application/vnd.api.v2+json) — harder to test\n   • ❌ Breaking changes without version bump\n   • ❌ Removing fields from existing version',
+        solutionExplain: 'This challenge tests understanding of the steering file format. The key decisions are: manual inclusion (not auto) because it\'s situational, URL-based versioning (most discoverable), and including anti-patterns to prevent common mistakes. After creating it, activate with #api-versioning-rules in chat.',
+      },
       { type: 'heading', text: '⭐⭐ Challenge 9: Experience Sub-Agent Delegation' },
       { type: 'note', text: 'Before starting this challenge, read the 🤖 Agents tab in the top navigation. It explains the three agent types (IDE, Sub-Agents, Autonomous), how sub-agents work during spec execution, and credit costs per action.' },
       { type: 'intro', text: 'This challenge lets you see how Kiro\'s spec workflow delegates tasks to sub-agents. You\'ll create a small spec, watch the orchestrator break it into tasks, and observe credit consumption.' },
@@ -2059,13 +2121,13 @@ function KnowledgeCheck() {
   }
 
   return (
-    <div className="kc-container">
-      <div className="kc-header">
+    <div className="kc-container" data-testid="id_knowledge_check_container_root">
+      <div className="kc-header" data-testid="id_knowledge_check_container_header">
         <h2>📝 Knowledge Check</h2>
         <p>Test your understanding of the Kiro Configuration Kit. 18 questions, 70% to pass.</p>
       </div>
 
-      <div className="kc-participant-info">
+      <div className="kc-participant-info" data-testid="id_knowledge_check_container_participant_info">
         <span>Participant: <strong>{name}</strong> ({email})</span>
       </div>
 
@@ -2101,13 +2163,88 @@ function KnowledgeCheck() {
         </button>
       ) : (
         <div className="kc-results">
-          <div className={`kc-score ${passed ? 'kc-pass' : 'kc-fail'}`}>
+          <div className={`kc-score ${passed ? 'kc-pass' : 'kc-fail'}`} data-testid="id_knowledge_check_label_score">
             Score: {score}/{total} ({pct}%) — {passed ? 'PASSED ✅' : 'NEEDS REVIEW ❌'}
           </div>
           {emailSent && <div className="kc-email-sent">✅ Results sent to the workshop administrator.</div>}
           {emailError && <div className="kc-email-error">⚠️ {emailError} — use the PDF export below as backup.</div>}
           <button className="kc-export" onClick={handleExportPDF} data-testid="knowledge-check-export-button">📄 Export Results as PDF</button>
           <button className="kc-retry" onClick={() => { setAnswers({}); setSubmitted(false); setEmailSent(false); setEmailError('') }} data-testid="knowledge-check-retry-button">🔄 Retry</button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ChallengeCard({ item, copiedIdx, copyToClipboard, globalIdx }) {
+  const [answer, setAnswer] = useState('')
+  const [revealed, setRevealed] = useState(false)
+  const [showHint, setShowHint] = useState(false)
+
+  return (
+    <div className="challenge-card" data-testid={`challenge-card-${item.id}`}>
+      <div className="challenge-header">
+        <span className="challenge-difficulty">{item.difficulty}</span>
+        <span className="challenge-title">{item.title}</span>
+      </div>
+      <div className="challenge-question">{item.question}</div>
+      {!revealed && (
+        <>
+          {item.hint && (
+            <button className="challenge-hint-btn" onClick={() => setShowHint(!showHint)} data-testid={`challenge-hint-btn-${item.id}`}>
+              {showHint ? '🙈 Hide Hint' : '💡 Show Hint'}
+            </button>
+          )}
+          {showHint && <div className="challenge-hint">{item.hint}</div>}
+          <textarea
+            className="challenge-textarea"
+            value={answer}
+            onChange={(e) => setAnswer(e.target.value)}
+            placeholder="Type your answer here..."
+            rows={6}
+            data-testid={`challenge-textarea-${item.id}`}
+          />
+          <button
+            className="challenge-submit-btn"
+            onClick={() => setRevealed(true)}
+            disabled={!answer.trim()}
+            data-testid={`challenge-submit-btn-${item.id}`}
+          >
+            🔓 Submit & Reveal Solution
+          </button>
+        </>
+      )}
+      {revealed && (
+        <div className="challenge-solution-area">
+          {answer.trim() && (
+            <div className="challenge-your-answer">
+              <div className="challenge-your-answer-label">📝 Your Answer:</div>
+              <div className="challenge-your-answer-text">{answer}</div>
+            </div>
+          )}
+          <div className="challenge-solution">
+            <div className="challenge-solution-label">✅ Solution:</div>
+            <pre className="challenge-solution-text">{item.solution}</pre>
+          </div>
+          <div className="challenge-solution-explain">
+            <span className="challenge-solution-explain-label">🧠 Why this is the answer:</span>
+            <span>{item.solutionExplain}</span>
+          </div>
+          {item.prompt && (
+            <div className="challenge-try-it">
+              <div className="challenge-try-it-label">🚀 Try it in Kiro:</div>
+              <div className="workshop-prompt-block">
+                <div className="workshop-prompt-label">💬 Kiro Chat Prompt</div>
+                <pre>{item.prompt}</pre>
+                <button className="workshop-copy-btn" onClick={() => copyToClipboard(item.prompt, `challenge-${item.id}`)} data-testid={`challenge-copy-prompt-${item.id}`}>
+                  {copiedIdx === `challenge-${item.id}` ? '✓ Copied' : 'Copy'}
+                </button>
+              </div>
+            </div>
+          )}
+          <button className="challenge-retry-btn" onClick={() => { setRevealed(false); setAnswer(''); setShowHint(false) }} data-testid={`challenge-retry-btn-${item.id}`}>
+            🔄 Try Again
+          </button>
         </div>
       )}
     </div>
@@ -2128,8 +2265,8 @@ function WorkshopGuide() {
   const part = workshopParts.find(p => p.id === activePart)
 
   return (
-    <div className="workshop-page">
-      <div className="workshop-sidebar">
+    <div className="workshop-page" data-testid="id_workshop_guide_container_root">
+      <div className="workshop-sidebar" data-testid="id_workshop_guide_container_sidebar">
         <div className="workshop-sidebar-title">🛠️ Workshop</div>
         {workshopParts.map(p => (
           <button
@@ -2152,7 +2289,7 @@ function WorkshopGuide() {
           <span className="workshop-nav-label">Knowledge Check</span>
         </button>
       </div>
-      <div className="workshop-content">
+      <div className="workshop-content" data-testid="id_workshop_guide_container_content">
         {activePart === 'knowledge-check' ? (
           <KnowledgeCheck />
         ) : (
@@ -2259,6 +2396,9 @@ function WorkshopGuide() {
                 )}
               </div>
             )
+            if (item.type === 'challenge') return (
+              <ChallengeCard key={i} item={item} copiedIdx={copiedIdx} copyToClipboard={copyToClipboard} globalIdx={i} />
+            )
             return null
           })}
         </div>
@@ -2269,9 +2409,37 @@ function WorkshopGuide() {
   )
 }
 
-const APP_VERSION = 'v0.1.2'
+const APP_VERSION = 'v0.1.3'
 
 const changelogEntries = [
+  {
+    version: '0.1.3',
+    date: 'April 16, 2026',
+    title: 'Interactive Bonus Challenges',
+    sections: [
+      {
+        heading: 'Workshop: Interactive Challenge Cards',
+        items: [
+          'Bonus Challenges 1–8 converted from static instructions to interactive challenge cards',
+          'Each challenge now presents a question the user must answer before seeing the solution',
+          'Text area for users to type their answer — submit button disabled until they write something',
+          'Show Hint button provides guidance without giving away the answer',
+          'After submitting: side-by-side view of user\'s answer and the full solution with explanation',
+          'Copyable Kiro chat prompt included with each solution for hands-on follow-up',
+          'Try Again button resets the challenge for reattempting',
+          'Challenge 9 (Sub-Agent Delegation) remains step-based as it\'s a hands-on Kiro exercise',
+        ],
+      },
+      {
+        heading: 'UI Additions',
+        items: [
+          'New ChallengeCard component with difficulty badge, hint toggle, answer area, and solution reveal',
+          'Challenge cards styled with amber accent to distinguish from regular workshop steps',
+          'Smooth fade-in animation when solution is revealed',
+        ],
+      },
+    ],
+  },
   {
     version: '0.1.2',
     date: 'April 15, 2026',
@@ -2537,7 +2705,7 @@ function AgentsGuide() {
         <h1 className="guide-title">🤖 Kiro Agents Guide</h1>
         <p className="guide-subtitle">Understanding agent types, sub-agent delegation, credit costs, and efficiency tips.</p>
 
-        <section className="guide-section">
+        <section className="guide-section" data-testid="id_agents_guide_container_agent_types">
           <h2>Agent Types</h2>
           <p className="guide-section-desc">Kiro has three layers of agent capability. Click each to see details.</p>
           <div className="guide-list">
@@ -2568,7 +2736,7 @@ function AgentsGuide() {
           </div>
         </section>
 
-        <section className="guide-section">
+        <section className="guide-section" data-testid="id_agents_guide_container_credit_costs">
           <h2>Credit Costs</h2>
           <div className="agents-table" data-testid="id_agents_guide_table_credit_costs">
             <div className="agents-table-header">
@@ -2587,7 +2755,7 @@ function AgentsGuide() {
           </div>
         </section>
 
-        <section className="guide-section">
+        <section className="guide-section" data-testid="id_agents_guide_container_credit_efficiency_tips">
           <h2>Credit Efficiency Tips</h2>
           <div className="guide-list">
             {creditTips.map((tip, i) => (
@@ -2599,7 +2767,7 @@ function AgentsGuide() {
           </div>
         </section>
 
-        <section className="guide-section">
+        <section className="guide-section" data-testid="id_agents_guide_container_sub_agent_workflow">
           <h2>Sub-Agent Workflow (Spec Execution)</h2>
           <div className="agents-flow">
             <div className="agents-flow-step">
@@ -2624,7 +2792,7 @@ function AgentsGuide() {
           </div>
         </section>
 
-        <section className="guide-section">
+        <section className="guide-section" data-testid="id_agents_guide_container_review_carefully">
           <h2>What to Review Carefully</h2>
           <div className="guide-list">
             <div className="agents-review-item">Generated steering files from skills — validate before committing</div>
