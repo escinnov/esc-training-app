@@ -1802,8 +1802,9 @@ const workshopParts = [
         hint: 'Think about the orchestrator → sub-agent delegation flow and what hooks are configured in the kit.',
         solution: '1. Tasks run sequentially (one at a time)\n   • The orchestrator queues all tasks and runs them in order\n   • Each task must complete before the next starts\n   • This ensures later tasks can build on earlier ones\n\n2. Each task is executed by the spec-task-execution sub-agent\n   • The orchestrator delegates to this specialized sub-agent\n   • The sub-agent writes code, runs tests, and returns results\n   • Each invocation costs 1+ credits\n\n3. When a handler file is generated during task 3:\n   • The unit-test-on-edit hook fires → generates unit tests\n   • The security-test-on-handler hook fires → generates security tests\n   • Both hooks fire BEFORE task 4 starts\n   • This means task 4 already has test coverage from task 3\'s code\n   • Each hook trigger costs 1 credit (so 2 extra credits for a handler file)',
         solutionExplain: 'Sequential execution is important because tasks often depend on each other (e.g., task 4 might import a module created in task 3). Hooks firing between tasks is a key benefit — it means every generated file gets tests automatically, even during spec execution.',
-        prompt: 'Open the tasks.md file from the spec you created in Challenge 9a. Click "Run All Tasks" and watch the Kiro agent panel. Pay attention to:\n\n1. The task status changing: pending → in_progress → completed\n2. Hook triggers appearing between tasks (unit-test, security-test)\n3. The sequential order — task N+1 only starts after task N completes\n\nAfter all tasks finish, check the generated files. Look for test files that were created by hooks, not by the spec tasks themselves.',
-        promptExplain: 'This is a hands-on observation prompt — don\'t paste it into chat. Instead, follow the instructions in the Kiro IDE. The goal is to see the orchestrator → spec-task-execution → hook trigger chain in real-time. Count the total agent invocations: tasks + hook triggers.',
+        prompt: null,
+        instructions: 'Open the tasks.md file from the spec you created in Challenge 9a. Click "Run All Tasks" and watch the Kiro agent panel. Pay attention to:\n\n1. The task status changing: pending → in_progress → completed\n2. Hook triggers appearing between tasks (unit-test, security-test)\n3. The sequential order — task N+1 only starts after task N completes\n\nAfter all tasks finish, check the generated files. Look for test files that were created by hooks, not by the spec tasks themselves.',
+        instructionsExplain: 'The goal is to see the orchestrator → spec-task-execution → hook trigger chain in real-time. Count the total agent invocations: tasks + hook triggers.',
       },
       {
         type: 'challenge',
@@ -1814,8 +1815,13 @@ const workshopParts = [
         hint: 'A spec costs 3-5 credits to create + ~1 per task. A chat message costs 1 credit. But think about how many chat messages you\'d actually need for 7 files.',
         solution: 'Option A — Spec workflow:\n• Create spec (requirements + design + tasks): 3-5 credits\n• Execute ~7-8 tasks: 7-8 credits\n• Hook triggers on handler/frontend files: ~3-4 credits\n• Total: ~13-17 credits\n\nOption B — Ad-hoc chat:\n• "Create the search model": 1 credit\n• "Create the search service": 1 credit\n• "Create the search handler": 1 credit\n• "Add the API route": 1 credit\n• "Create the frontend component": 1 credit\n• Hook triggers: ~3-4 credits\n• Clarifying questions / fixing issues: 3-5 credits\n• "Wait, the service doesn\'t match the handler": 1-2 credits\n• "The tests are failing, fix them": 1-2 credits\n• Total: ~13-18 credits\n\nVerdict: Similar cost, but the spec is MORE RELIABLE because:\n• It plans before coding → fewer fix-it-later messages\n• Tasks have clear scope → less back-and-forth\n• Design document catches integration issues upfront\n• For features with 5+ files, specs break even or save credits\n• For features with 10+ files, specs are significantly cheaper',
         solutionExplain: 'The breakeven point is roughly 5 files. Below that, chat is simpler and equally cheap. Above that, the upfront planning cost of a spec pays for itself by reducing rework and clarification messages. The key insight: specs are cheaper not because individual tasks cost less, but because planning reduces wasted credits on fixes.',
-        prompt: 'Now try building the same search feature using ad-hoc chat (no spec). Send these messages one at a time and count your credits:\n\n1. "Add a search_entries function to the service layer that searches by title, content, and tags using case-insensitive ILIKE queries with SQLAlchemy"\n2. "Create a GET /entries/search?q=term handler that calls the search service and returns paginated results"\n3. "Add a search bar component to the frontend that calls the search API with debounced input"\n\nCompare: How many total credits did this take vs the spec approach? Did you need any follow-up messages to fix integration issues?',
-        promptExplain: 'This is the ad-hoc comparison experiment. By building the same feature both ways (spec in 9a/9b, chat here), you can directly compare credit costs, code quality, and how much rework was needed. The chat approach is faster to start but often needs more fix-it messages.',
+        instructions: 'Now try building the same search feature using ad-hoc chat (no spec). Send these prompts one at a time in Kiro chat and count your credits. After all three, compare: how many total credits did this take vs the spec approach? Did you need any follow-up messages to fix integration issues?',
+        prompt: 'Add a search_entries function to the service layer that searches by title, content, and tags using case-insensitive ILIKE queries with SQLAlchemy',
+        promptExplain: 'This is the first of three ad-hoc chat messages. After this one completes, send the next two prompts below separately.',
+        followUpPrompts: [
+          'Create a GET /entries/search?q=term handler that calls the search service and returns paginated results',
+          'Add a search bar component to the frontend that calls the search API with debounced input',
+        ],
       },
     ],
   },
@@ -2258,6 +2264,15 @@ function ChallengeCard({ item, copiedIdx, copyToClipboard, globalIdx }) {
             <span className="challenge-solution-explain-label">🧠 Why this is the answer:</span>
             <span>{item.solutionExplain}</span>
           </div>
+          {item.instructions && (
+            <div className="challenge-instructions">
+              <div className="challenge-instructions-label">🖥️ Try it — follow these steps in Kiro:</div>
+              <pre className="challenge-instructions-text">{item.instructions}</pre>
+              {item.instructionsExplain && (
+                <div className="challenge-instructions-explain">{item.instructionsExplain}</div>
+              )}
+            </div>
+          )}
           {item.prompt && (
             <div className="challenge-try-it">
               <div className="challenge-try-it-label">🚀 Try it in Kiro:</div>
@@ -2274,6 +2289,20 @@ function ChallengeCard({ item, copiedIdx, copyToClipboard, globalIdx }) {
                   <span>{item.promptExplain}</span>
                 </div>
               )}
+            </div>
+          )}
+          {item.followUpPrompts && item.followUpPrompts.length > 0 && (
+            <div className="challenge-followups">
+              <div className="challenge-followups-label">Then send these follow-up prompts one at a time:</div>
+              {item.followUpPrompts.map((fp, fi) => (
+                <div key={fi} className="workshop-prompt-block">
+                  <div className="workshop-prompt-label">💬 Prompt {fi + 2}</div>
+                  <pre>{fp}</pre>
+                  <button className="workshop-copy-btn" onClick={() => copyToClipboard(fp, `challenge-${item.id}-fp-${fi}`)} data-testid={`challenge-copy-followup-${item.id}-${fi}`}>
+                    {copiedIdx === `challenge-${item.id}-fp-${fi}` ? '✓ Copied' : 'Copy'}
+                  </button>
+                </div>
+              ))}
             </div>
           )}
           <button className="challenge-retry-btn" onClick={() => { setRevealed(false); setAnswer(''); setShowHint(false) }} data-testid={`challenge-retry-btn-${item.id}`}>
@@ -2443,9 +2472,26 @@ function WorkshopGuide() {
   )
 }
 
-const APP_VERSION = 'v0.1.5'
+const APP_VERSION = 'v0.1.6'
 
 const changelogEntries = [
+  {
+    version: '0.1.6',
+    date: 'April 16, 2026',
+    title: 'Fix Challenge 9 — Separate Prompts from Instructions',
+    sections: [
+      {
+        heading: 'Workshop: Challenge Prompt/Instruction Distinction',
+        items: [
+          'Challenge cards now distinguish between Kiro Chat Prompts (pasteable) and IDE Instructions (steps to follow)',
+          'Challenge 9b: Converted from mislabeled chat prompt to a proper IDE instruction guide with 🖥️ label',
+          'Challenge 9c: Split into an instruction header, a primary chat prompt, and 2 follow-up prompts — each individually copyable',
+          'New ChallengeCard fields: instructions, instructionsExplain, followUpPrompts',
+          'Follow-up prompts labeled as "Prompt 2", "Prompt 3" etc. with individual copy buttons',
+        ],
+      },
+    ],
+  },
   {
     version: '0.1.5',
     date: 'April 16, 2026',

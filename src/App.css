@@ -2039,3 +2039,52 @@ h2 {
 .challenge-retry-btn:hover {
   background: #475569;
 }
+
+/* Challenge instructions (IDE steps, not chat prompts) */
+.challenge-instructions {
+  padding: 0.8rem 1rem;
+  background: rgba(59, 130, 246, 0.06);
+  border-left: 3px solid #60a5fa;
+  border-radius: 0 8px 8px 0;
+}
+
+.challenge-instructions-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #60a5fa;
+  margin-bottom: 0.5rem;
+}
+
+.challenge-instructions-text {
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  white-space: pre-wrap;
+  line-height: 1.6;
+  font-family: inherit;
+  margin: 0;
+  background: none;
+  padding: 0;
+}
+
+.challenge-instructions-explain {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(96, 165, 250, 0.15);
+  line-height: 1.5;
+}
+
+/* Challenge follow-up prompts */
+.challenge-followups {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.challenge-followups-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #94a3b8;
+  margin-bottom: 0.1rem;
+}
