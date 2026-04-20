@@ -1,0 +1,7 @@
+{
+  "codeAssist": {
+    "styleguides": [
+      ".gemini/styleguide.md"
+    ]
+  }
+}
