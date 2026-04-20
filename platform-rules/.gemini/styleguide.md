@@ -288,6 +288,11 @@ Every bug fix MUST include a regression test tagged `@pytest.mark.regression`.
 
 ALL interactive UI elements MUST have a `data-testid` attribute:
 - Buttons, inputs, textareas, selects, checkboxes, links, forms, modals, tabs, accordions, menus
+- Inline form validation / error messages
+- Loading spinners / skeleton screens (needed for explicit waits in tests)
+- Tooltip triggers
+- Drag-and-drop targets and draggable items
+- Sort controls inside table headers
 
 Naming convention: `id_{view}_{type}_{name}` in **snake_case**.
 - `id` = locator type (always `id` for data-testid)
