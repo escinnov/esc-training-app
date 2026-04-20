@@ -161,7 +161,7 @@ const slides = [
       { name: 'Timezone Rules', mode: 'Auto', icon: '🕐', desc: 'Store UTC, send with offset, display local. Date-only fields need companion timezone' },
       { name: 'Testing Standards', mode: 'Auto', icon: '🧪', desc: 'AAA pattern, 90% coverage, security tests for handlers, regression tests for fixes' },
       { name: 'Query Safety', mode: 'FileMatch', icon: '🛡️', desc: 'Parameterized queries mandatory, keyword blocklists banned. Loads on handler/service/repo files' },
-      { name: 'QA Element IDs', mode: 'FileMatch', icon: '🏷️', desc: 'data-testid with id_view_type_name convention. Loads on frontend files only' },
+      { name: 'QA Element IDs', mode: 'FileMatch', icon: '🏷️', desc: 'data-testid with id_view_type_name convention. Covers interactive elements, validation messages, loaders, tooltips, drag-and-drop, and sort controls. Loads on frontend files only' },
       { name: 'Storage Design', mode: 'FileMatch', icon: '💾', desc: 'Schema design, indexing, encryption, backups, table naming. Loads on model/migration files' },
       { name: 'API Standards', mode: 'Manual', icon: '🔌', desc: 'Response format, HTTP status codes, fail-closed error handling, rate limiting. Activate with #api-standards' },
       { name: 'Auth Rules', mode: 'Manual', icon: '🔑', desc: 'AWS Cognito User Pool, JWT/JWKS validation, RBAC, resource ownership. Activate with #auth-rules' },
@@ -1079,7 +1079,7 @@ const steeringGuide = [
     file: 'qa-element-id-rules.md',
     mode: 'FileMatch',
     icon: '🏷️',
-    what: 'Ensures data-testid attributes on all interactive UI elements using id_view_type_name convention in snake_case.',
+    what: 'Ensures data-testid attributes on all interactive UI elements, inline validation messages, loading spinners, tooltip triggers, drag-and-drop targets, and sort controls using id_view_type_name convention in snake_case.',
     when: 'When editing frontend component files — React, Vue, Svelte, or HTML.',
     whenNot: 'When working on backend Python code, database migrations, infrastructure, or documentation.',
     activate: 'Loads automatically when you open/edit files matching: **/*.tsx, **/*.jsx, **/*.vue, **/*.svelte, **/*.html',
@@ -1257,7 +1257,7 @@ const hooksGuide = [
     file: 'qa-element-ids.kiro.hook',
     icon: '🏷️',
     trigger: 'Frontend file saved (.tsx, .jsx, .vue, .svelte, .html)',
-    what: 'Scans for interactive elements missing data-testid and adds them following the qa-element-id-rules steering file. Compact prompt — 75% smaller than v1.',
+    what: 'Scans for interactive elements, validation messages, loaders, tooltips, drag-and-drop targets, and sort controls missing data-testid and adds them following the qa-element-id-rules steering file. Compact prompt — 75% smaller than v1.',
     when: 'Always useful during frontend development. Ensures QA automation is never blocked by missing selectors.',
     whenNot: 'If you\'re doing a large frontend refactor and want to add testids in a single pass afterward. Temporarily disable.',
     activate: 'Enabled by default. If previously disabled, set "enabled": true in the hook file.',
@@ -1540,7 +1540,7 @@ const workshopParts = [
         name: 'React',
         layer: 'Frontend UI',
         color: '#60a5fa',
-        why: 'Most widely used frontend library. The qa-element-id-rules.md steering file has React/JSX examples, and the qa-element-ids hook targets .jsx/.tsx files. Component-based structure maps naturally to the data-testid naming convention ({component}-{element}-{descriptor}).',
+        why: 'Most widely used frontend library. The qa-element-id-rules.md steering file has React/JSX examples, and the qa-element-ids hook targets .jsx/.tsx files. Component-based structure maps naturally to the data-testid naming convention (id_{view}_{type}_{name} in snake_case).',
         vs: 'Vue or Svelte (also supported by the kit\'s hooks) or plain HTML (no component model)',
       },
       {
@@ -2200,8 +2200,8 @@ function KnowledgeCheck() {
           <div className={`kc-score ${passed ? 'kc-pass' : 'kc-fail'}`} data-testid="id_knowledge_check_label_score">
             Score: {score}/{total} ({pct}%) — {passed ? 'PASSED ✅' : 'NEEDS REVIEW ❌'}
           </div>
-          {emailSent && <div className="kc-email-sent">✅ Results sent to the workshop administrator.</div>}
-          {emailError && <div className="kc-email-error">⚠️ {emailError} — use the PDF export below as backup.</div>}
+          {emailSent && <div className="kc-email-sent" data-testid="id_knowledge_check_label_email_sent">✅ Results sent to the workshop administrator.</div>}
+          {emailError && <div className="kc-email-error" data-testid="id_knowledge_check_label_email_error">⚠️ {emailError} — use the PDF export below as backup.</div>}
           <button className="kc-export" onClick={handleExportPDF} data-testid="knowledge-check-export-button">📄 Export Results as PDF</button>
           <button className="kc-retry" onClick={() => { setAnswers({}); setSubmitted(false); setEmailSent(false); setEmailError('') }} data-testid="knowledge-check-retry-button">🔄 Retry</button>
         </div>
