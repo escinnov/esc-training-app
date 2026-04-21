@@ -119,7 +119,7 @@ const slides = [
         title: 'Steering Rules',
         color: '#8b5cf6',
         desc: 'Always-on, contextual, or opt-in coding standards',
-        items: ['Entity standards (auto)', 'Timezone rules (auto)', 'Testing standards (auto)', 'Query safety (contextual)', 'QA element IDs (contextual)', 'Storage design (contextual)', 'API standards (manual)', 'Auth rules (manual)', 'Secrets management (manual)', 'Concurrency & locking (manual)', 'Report generation (manual)', 'Data upload (manual)', 'Offline sync (manual)', 'Logging (manual)'],
+        items: ['Entity standards (auto)', 'Timezone rules (auto)', 'Testing standards (auto)', 'Query safety (contextual)', 'QA element IDs (contextual)', 'Storage design (contextual)', 'API standards (manual)', 'Auth rules (manual)', 'Secrets management (manual)', 'Concurrency & locking (manual)', 'Report generation (manual)', 'Data upload (manual)', 'Offline sync (manual)', 'Logging (manual)', 'User guide generation (manual)'],
       },
       {
         icon: '🧠',
@@ -171,6 +171,7 @@ const slides = [
       { name: 'Offline Sync', mode: 'Manual', icon: '📡', desc: 'Delta sync, local storage schema, conflict resolution, sync API design' },
       { name: 'Logging', mode: 'Manual', icon: '📝', desc: 'Structured JSON logging, log levels, correlation IDs, PII redaction. Activate with #logging-rules' },
       { name: 'Secrets Management', mode: 'Manual', icon: '🗝️', desc: 'Parameter Store + load once at startup, admin reload endpoint. Activate with #secrets-management-rules' },
+      { name: 'User Guide Generation', mode: 'Manual', icon: '📖', desc: 'Generates end-user guide from codebase. One-time use. Activate with #user-guide-generation' },
     ],
   },
   {
@@ -1182,6 +1183,17 @@ const steeringGuide = [
     when: 'When setting up logging infrastructure, adding observability, or standardizing log output across the project.',
     whenNot: 'When the logging setup is already in place and you\'re writing business logic that doesn\'t need logging changes.',
     activate: 'Type #logging-rules in the Kiro chat to activate for the current session.',
+    deactivate: 'It deactivates automatically when the session ends. No action needed.',
+  },
+  {
+    name: 'User Guide Generation',
+    file: 'user-guide-generation.md',
+    mode: 'Manual',
+    icon: '📖',
+    what: 'Generates a USER-GUIDE.md from the actual codebase. End-user focused — no code, no API refs, no developer details. Enforces structure: overview, getting started, features, workflows, troubleshooting, FAQ.',
+    when: 'When you need to create or regenerate the user-facing documentation for the application. Typically used once per project or after major feature additions.',
+    whenNot: 'When the user guide already exists and you\'re making small code changes. Not for developer documentation — this is strictly for end users.',
+    activate: 'Type #user-guide-generation in the Kiro chat to activate for the current session.',
     deactivate: 'It deactivates automatically when the session ends. No action needed.',
   },
 ]
@@ -2472,9 +2484,33 @@ function WorkshopGuide() {
   )
 }
 
-const APP_VERSION = 'v0.1.6'
+const APP_VERSION = 'v0.1.7'
 
 const changelogEntries = [
+  {
+    version: '0.1.7',
+    date: 'April 21, 2026',
+    title: 'New Steering Rule: User Guide Generation',
+    sections: [
+      {
+        heading: 'New: User Guide Generation Rule',
+        items: [
+          'New manual steering file: user-guide-generation.md — activate with #user-guide-generation',
+          'Generates USER-GUIDE.md from actual codebase — end-user focused, no code or developer details',
+          'Enforces structure: overview, getting started, features, workflows, troubleshooting, FAQ',
+          'Writing style rules: second person, active voice, verb-first actions, tip/warning callouts',
+          'Total steering files: 15 (3 auto, 3 fileMatch, 9 manual)',
+        ],
+      },
+      {
+        heading: 'Training App Updates',
+        items: [
+          'Added User Guide Generation to kit overview slide, steering grid, and activation guide',
+          'Updated kit inventory count in changelog to 15 steering files',
+        ],
+      },
+    ],
+  },
   {
     version: '0.1.6',
     date: 'April 16, 2026',
@@ -2617,7 +2653,7 @@ const changelogEntries = [
       {
         heading: 'Kit Inventory Update',
         items: [
-          'Total steering files: 14 (3 auto, 3 fileMatch, 8 manual)',
+          'Total steering files: 15 (3 auto, 3 fileMatch, 9 manual)',
           'New file: secrets-management-rules.md (manual)',
           'Updated file: auth-rules.md — expanded from 7 to 9 anti-patterns, added Cognito section',
         ],
